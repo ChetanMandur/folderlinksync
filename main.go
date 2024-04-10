@@ -1,11 +1,20 @@
 package main
 
+//initalize global variables (folderLinks, linkGroups)
+var folderLinks []fLink
+var groups []fGroup
+
 func main() {
 	// ON LAUNCH
 	launchSequence()
 
-	while (true){
-		for link in links{
+	for true {
+		for _, currFLink := range folderLinks {
+			// folderLinks is a collection of all the links from links.json, link is a singular item from that collection
+
+			//First check the linkSums, and check if there are any differences
+			var linkSumACheck bool = linkSumCheck(currFLink.pathA, currFLink.linkSumA)
+			var linkSumBCheck bool = linkSumCheck(currFLink.pathB, currFLink.linkSumB)
 
 		}
 
@@ -18,18 +27,29 @@ func launchSequence() {
 	// Need to figure out a way to make this constantly running
 
 	// Parse JSONs and load into memory
-	
-	// // links.json will hold all A <-> B links
+
+	// // links.json will hold all A <-> B links, where A and B are both paths to a folder/directory
 	// // // Paths to both A and B
 
 	// // group UUID (if it is apart of a group)
 	// // // groups.json will hold basic info of all groups in the system
 	// // // name and UUID of group
 
-	// Generate/Check linkSum for all links
+	// Generate/Check linkSums for all links
 	// (linkSum is just the current path/file snapshot for one end of a link, one for A and one for B)
+	// (ie. each link has two linkSums)
 	// (Used to check for changes on link)
 
-	// // if linkSum doesn't exist, generate it
-	// // if linkSum exists, update it
+	// // if linkSums doesn't exist, generate it
+	// // if linkSums exists, update it
+}
+
+func linkSumCheck(fPath string, linkSum string) bool {
+	//Temporarily create new linkSum using fPath
+	//Compares temp with given
+	if true {
+		return true
+	} else {
+		return false
+	}
 }
