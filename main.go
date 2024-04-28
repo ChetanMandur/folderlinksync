@@ -48,7 +48,14 @@ func launchSequence() {
 	json.Unmarshal(linksJson, &folderLinks)
 
 	for i := 0; i < len(folderLinks.FolderLinks); i++ {
-		fmt.Println("Loaded Folder Link #" + string(i))
+		fmt.Println("Loaded Folder Link #" + fmt.Sprint(i+1))
+		fmt.Println("--UUID: " + fmt.Sprint(folderLinks.FolderLinks[i].UUID))
+		if folderLinks.FolderLinks[i].GroupUUID != 0 {
+			fmt.Println("--Group UUID: " + fmt.Sprint(folderLinks.FolderLinks[i].GroupUUID))
+
+		}
+		fmt.Println("--Folder A: " + folderLinks.FolderLinks[i].FolderA)
+		fmt.Println("--Folder B: " + folderLinks.FolderLinks[i].FolderB)
 	}
 
 	// // group UUID (if it is apart of a group)
