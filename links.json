@@ -1,0 +1,11 @@
+{
+  "links":[
+    {
+      "uuid":1,
+      "name":"test sync",
+      "folderA":"./test/a",
+      "folderB":"./test/b",
+      "groupUUID":null
+    }
+  ]
+}

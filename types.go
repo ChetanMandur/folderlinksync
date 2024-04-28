@@ -1,18 +1,26 @@
 package main
 
-type fLink struct {
-	pathA     string
-	pathB     string
+type FolderLinks struct {
+	FolderLinks []FolderLink `json:"links"`
+}
+
+type FolderLink struct {
+	Name      string `json:"name"`
+	FolderA   string `json:"folderA"`
+	FolderB   string `json:"folderB"`
 	linkSumA  string
 	linkSumB  string
-	groupUUID string
+	GroupUUID string `json:"groupUUID"`
 	status    int
-	uuid      int
+	UUID      int `json:"uuid"`
 	//0 = no changes/idle state, 1 = changes detected, 2 = approved sync, 3 = cancel changes (folder B has changes, folder A reject changes and makes B in sync with A)
 
 }
 
-type fGroup struct {
+type FolderGroups struct {
+	FolderGroups []FolderGroup
+}
+type FolderGroup struct {
 	name string
 	uuid string
 }
