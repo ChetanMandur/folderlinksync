@@ -8,23 +8,24 @@ import (
 
 // initalize global variables (folderLinks, linkGroups)
 var folderLinks FolderLinks
-var groups FolderGroups
+var folderGroups FolderGroups
 
 func main() {
 	// ON LAUNCH
 	launchSequence()
 
-	for true {
-		// for _, currFLink := range folderLinks {
-		// 	// folderLinks is a collection of all the links from links.json, link is a singular item from that collection
+	for {
+		for _, currentFolderLink := range folderLinks.FolderLinks {
+			// folderLinks is a collection of all the links from links.json, link is a singular item from that collection
 
-		// 	//First check the linkSums, and check if there are any differences
-		// 	var linkSumACheck bool = linkSumCheck(currFLink.pathA, currFLink.linkSumA)
-		// 	var linkSumBCheck bool = linkSumCheck(currFLink.pathB, currFLink.linkSumB)
+			//First check the linkSums, and check if there are any differences
+			// var linkSumACheck bool = linkSumCheck(currFLink.pathA, currFLink.linkSumA)
+			// var linkSumBCheck bool = linkSumCheck(currFLink.pathB, currFLink.linkSumB)
 
-		// }
-		fmt.Println("Hello World!")
-		break
+			fmt.Println(currentFolderLink.Name)
+
+		}
+
 	}
 
 }
@@ -49,18 +50,35 @@ func launchSequence() {
 
 	for i := 0; i < len(folderLinks.FolderLinks); i++ {
 		fmt.Println("Loaded Folder Link #" + fmt.Sprint(i+1))
+		fmt.Println("--Name: " + fmt.Sprint(folderLinks.FolderLinks[i].Name))
 		fmt.Println("--UUID: " + fmt.Sprint(folderLinks.FolderLinks[i].UUID))
 		if folderLinks.FolderLinks[i].GroupUUID != 0 {
 			fmt.Println("--Group UUID: " + fmt.Sprint(folderLinks.FolderLinks[i].GroupUUID))
-
 		}
 		fmt.Println("--Folder A: " + folderLinks.FolderLinks[i].FolderA)
 		fmt.Println("--Folder B: " + folderLinks.FolderLinks[i].FolderB)
 	}
 
+	fmt.Println(" ")
+
 	// // group UUID (if it is apart of a group)
 	// // // groups.json will hold basic info of all groups in the system
 	// // // name and UUID of group
+	groupsJson, groupsError := os.ReadFile("groups.json")
+
+	if groupsError != nil {
+		fmt.Println("Error! Cannot find 'groups.json' in program directory!")
+	}
+
+	fmt.Println("Opened 'groups.json'!")
+
+	json.Unmarshal(groupsJson, &folderGroups)
+
+	for i := 0; i < len(folderGroups.FolderGroups); i++ {
+		fmt.Println("Loaded Folder Group #" + fmt.Sprint(i+1))
+		fmt.Println("--Name: " + folderGroups.FolderGroups[i].Name)
+		fmt.Println("--UUID: " + fmt.Sprint(folderGroups.FolderGroups[i].UUID))
+	}
 
 	// Generate/Check linkSums for all links
 	// (linkSum is just the current path/file snapshot for one end of a link, one for A and one for B)

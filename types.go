@@ -18,11 +18,11 @@ type FolderLink struct {
 }
 
 type FolderGroups struct {
-	FolderGroups []FolderGroup
+	FolderGroups []FolderGroup `json:"groups"`
 }
 type FolderGroup struct {
-	name string
-	uuid string
+	Name string `json:"name"`
+	UUID int    `json:"uuid"`
 }
 
 type linkSum struct {
