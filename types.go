@@ -1,5 +1,7 @@
 package main
 
+import "github.com/fsnotify/fsnotify"
+
 type FolderLinks struct {
 	FolderLinks []FolderLink `json:"links"`
 }
@@ -26,5 +28,19 @@ type FolderGroup struct {
 }
 
 type linkSum struct {
-	linkSumPath string
+	FolderLinkUUID int
+	FolderA        []linkSumItem
+	FolderB        []linkSumItem
+}
+
+type linkSumItem struct {
+	name         string
+	lastModified string
+}
+
+type Event struct {
+	fileName    string
+	path        string
+	isDirectory bool
+	op          fsnotify.Op
 }

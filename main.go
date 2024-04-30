@@ -4,68 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
-	"github.com/fsnotify/fsnotify"
 )
 
 // initalize global variables (folderLinks, linkGroups)
 var folderLinks FolderLinks
 var folderGroups FolderGroups
 
-func WatcherFactory() {
-	watcher, watcherError := fsnotify.NewWatcher()
-
-	if watcherError != nil {
-		fmt.Println("error creating a new watcher", watcherError)
-		os.Exit(1)
-	}
-
-	defer watcher.Close()
-
-	go WatchersLoop(watcher)
-
-	for _, currentFolderLink := range folderLinks.FolderLinks {
-		watcherError = watcher.Add(currentFolderLink.FolderA)
-		if watcherError != nil {
-			os.Exit(1)
-		}
-		watcherError = watcher.Add(currentFolderLink.FolderB)
-		if watcherError != nil {
-			os.Exit(1)
-		}
-	}
-	<-make(chan struct{})
-
-}
-
-func WatchersLoop(watcher *fsnotify.Watcher) {
-	for {
-		select {
-		// Read from Errors.
-		case err, ok := <-watcher.Errors:
-			if !ok { // Channel was closed (i.e. Watcher.Close() was called).
-				return
-			}
-			fmt.Println(err)
-
-		// Read from Events.
-		case e, ok := <-watcher.Events:
-			if !ok { // Channel was closed (i.e. Watcher.Close() was called).
-				return
-			}
-
-			// Just print the event nicely aligned, and keep track how many
-			// events we've seen
-			fmt.Println(e)
-		}
-	}
-}
-
 func main() {
 	// ON LAUNCH
 	launchSequence()
-	WatcherFactory()
-
+	for {
+		WatcherFactory()
+	}
 	// for {
 	// 	for _, currentFolderLink := range folderLinks.FolderLinks {
 	// 		// folderLinks is a collection of all the links from links.json, link is a singular item from that collection

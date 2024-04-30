@@ -6,6 +6,20 @@
       "folderA":"./test/a",
       "folderB":"./test/b",
       "groupUUID":null
+    },
+    {
+      "uuid":2,
+      "name":"test sync2",
+      "folderA":"./test/b",
+      "folderB":"./test/c",
+      "groupUUID":null
+    },
+    {
+      "uuid":3,
+      "name":"test sync",
+      "folderA":"./test/a",
+      "folderB":"./test/d",
+      "groupUUID":null
     }
   ]
 }
