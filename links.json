@@ -16,9 +16,16 @@
     },
     {
       "uuid":3,
-      "name":"test sync",
+      "name":"test sync3",
       "folderA":"./test/a",
       "folderB":"./test/d",
+      "groupUUID":null
+    },
+    {
+      "uuid":4,
+      "name":"ERROR HANDLE",
+      "folderA":"./test/a",
+      "folderB":"./test2/a",
       "groupUUID":null
     }
   ]

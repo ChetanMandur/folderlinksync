@@ -4,18 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 )
 
 // initalize global variables (folderLinks, linkGroups)
 var folderLinks FolderLinks
 var folderGroups FolderGroups
 
+// var linkSums = make(map[string][]linkSumItem)
+var linkSums = make(map[string]map[string]time.Time)
+
 func main() {
 	// ON LAUNCH
 	launchSequence()
-	for {
-		WatcherFactory()
-	}
+	// for {
+	// 	WatcherFactory()
+	// }
 	// for {
 	// 	for _, currentFolderLink := range folderLinks.FolderLinks {
 	// 		// folderLinks is a collection of all the links from links.json, link is a singular item from that collection
@@ -44,7 +48,7 @@ func launchSequence() {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")
 	}
 
-	fmt.Println("Opened 'links.json'!")
+	// fmt.Println("Opened 'links.json'!")
 
 	json.Unmarshal(linksJson, &folderLinks)
 
@@ -70,7 +74,7 @@ func launchSequence() {
 		fmt.Println("Error! Cannot find 'groups.json' in program directory!")
 	}
 
-	fmt.Println("Opened 'groups.json'!")
+	// fmt.Println("Opened 'groups.json'!")
 
 	json.Unmarshal(groupsJson, &folderGroups)
 
@@ -79,15 +83,16 @@ func launchSequence() {
 		fmt.Println("--Name: " + folderGroups.FolderGroups[i].Name)
 		fmt.Println("--UUID: " + fmt.Sprint(folderGroups.FolderGroups[i].UUID))
 	}
+	fmt.Println(" ")
 
 	// Generate/Check linkSums for all links
 	// (linkSum is just the current path/file snapshot for one end of a link, one for A and one for B)
 	// (ie. each link has two linkSums)
 	// (Used to check for changes on link)
 
-	// // if linkSums doesn't exist, generate it
-	// // if linkSums exists, update it
-	fmt.Println("Launch sequence")
+	initalizeLinkSum()
+	firstBootSync()
+	fmt.Println("Launch Sequence Complete!")
 }
 
 func linkSumCheck(fPath string, linkSum string) bool {
