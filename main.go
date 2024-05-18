@@ -35,6 +35,7 @@ func main() {
 }
 
 func launchSequence() {
+	fmt.Println("---LAUNCH SEQUENCE---")
 	// Start webserver
 	// Need to figure out a way to make this constantly running
 

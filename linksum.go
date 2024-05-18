@@ -6,11 +6,14 @@ import (
 	"path/filepath"
 	"slices"
 	"time"
+
+	copy "github.com/otiai10/copy"
 )
 
 // linkSums is what holds all directory info (name+lastModified)
 
 func initalizeLinkSum() {
+	fmt.Println("---INITALIZE LINK SUM---")
 	for _, currentFolderLink := range folderLinks.FolderLinks {
 		absFolderA, _ := filepath.Abs(currentFolderLink.FolderA)
 		absFolderB, _ := filepath.Abs(currentFolderLink.FolderB)
@@ -54,6 +57,7 @@ func initalizeLinkSum() {
 }
 
 func firstBootSync() {
+	fmt.Println("---FIRST BOOT SYNC---")
 	for _, currentFolderLink := range folderLinks.FolderLinks {
 		absFolderA, _ := filepath.Abs(currentFolderLink.FolderA)
 		absFolderB, _ := filepath.Abs(currentFolderLink.FolderB)
@@ -80,6 +84,11 @@ func firstBootSync() {
 								checkedFiles = append(checkedFiles, f.Name())
 								if folderB[currentFileName].IsZero() {
 									fmt.Print("File does not exist in folder B \n")
+									fmt.Print("Lets coppppyyyyyy \n")
+									// fmt.Println(path, filepath.ToSlash(absFolderB+"/"+filepath.Base(path)))
+									err := copy.Copy(path, filepath.ToSlash(absFolderB+"/"+filepath.Base(path)))
+									fmt.Println("Error:", err)
+
 								} else {
 									fmt.Print("File exists in folder B \n")
 								}
@@ -94,7 +103,7 @@ func firstBootSync() {
 							}
 
 						} else { //The first file in pathwalk is just the root folder, we skip it to avoid adding a whole copy of A into B
-							fmt.Println("Skipping first file")
+							// fmt.Println("Skipping first file")
 							steps++
 						}
 
@@ -116,6 +125,8 @@ func firstBootSync() {
 								checkedFiles = append(checkedFiles, f.Name())
 								if folderA[currentFileName].IsZero() {
 									fmt.Print("File does not exist in folder A \n")
+									err := copy.Copy(path, filepath.ToSlash(absFolderA+"/"+filepath.Base(path)))
+									fmt.Println(err)
 								} else {
 									fmt.Print("File exists in folder A \n")
 								}
@@ -130,7 +141,7 @@ func firstBootSync() {
 							}
 
 						} else { //The first file in pathwalk is just the root folder, we skip it to avoid adding a whole copy of A into B
-							fmt.Println("Skipping first file")
+							// fmt.Println("Skipping first file")
 							steps++
 						}
 
