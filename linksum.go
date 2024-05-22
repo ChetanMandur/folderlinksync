@@ -56,6 +56,19 @@ func initalizeLinkSum() {
 	fmt.Println(linkSums)
 }
 
+func copySync(name string, source string, destination string) {
+	fmt.Println("CopySync", name, source, destination)
+
+	folderSource := linkSums[source]
+	folderDestination := linkSums[destination]
+
+	copyError := copy.Copy(filepath.ToSlash(source+"/"+filepath.Base(name)), filepath.ToSlash(destination+"/"+filepath.Base(name)))
+	if copyError != nil {
+		fmt.Println("Error:", copyError)
+	}
+	folderDestination[name] = folderSource[name]
+}
+
 func firstBootSync() {
 	fmt.Println("---FIRST BOOT SYNC---")
 	for _, currentFolderLink := range folderLinks.FolderLinks {
@@ -81,13 +94,11 @@ func firstBootSync() {
 							fmt.Print("FBS ", currentFileName, " ")
 
 							if !(slices.Contains(checkedFiles, currentFileName)) {
-								checkedFiles = append(checkedFiles, f.Name())
+								checkedFiles = append(checkedFiles, currentFileName)
 								if folderB[currentFileName].IsZero() {
 									fmt.Print("File does not exist in folder B \n")
 									fmt.Print("Lets coppppyyyyyy \n")
-									// fmt.Println(path, filepath.ToSlash(absFolderB+"/"+filepath.Base(path)))
-									err := copy.Copy(path, filepath.ToSlash(absFolderB+"/"+filepath.Base(path)))
-									fmt.Println("Error:", err)
+									copySync(currentFileName, absFolderA, absFolderB)
 
 								} else {
 									fmt.Print("File exists in folder B \n")
@@ -122,7 +133,7 @@ func firstBootSync() {
 							fmt.Print("FBS ", currentFileName, " ")
 
 							if !(slices.Contains(checkedFiles, currentFileName)) {
-								checkedFiles = append(checkedFiles, f.Name())
+								checkedFiles = append(checkedFiles, currentFileName)
 								if folderA[currentFileName].IsZero() {
 									fmt.Print("File does not exist in folder A \n")
 									err := copy.Copy(path, filepath.ToSlash(absFolderA+"/"+filepath.Base(path)))
