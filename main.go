@@ -62,6 +62,7 @@ func launchSequence() {
 		}
 		fmt.Println("--Folder A: " + folderLinks.FolderLinks[i].FolderA)
 		fmt.Println("--Folder B: " + folderLinks.FolderLinks[i].FolderB)
+		folderLinks.FolderLinks[i].status = 0
 	}
 
 	fmt.Println(" ")
@@ -91,8 +92,9 @@ func launchSequence() {
 	// (ie. each link has two linkSums)
 	// (Used to check for changes on link)
 
-	initalizeLinkSum()
-	firstBootSync()
+	// initalizeLinkSum()
+	// firstBootSync()
+	betterFirstBootSync()
 	fmt.Println("Launch Sequence Complete!")
 }
 
