@@ -5,28 +5,45 @@
       "name":"test sync",
       "folderA":"./test/a",
       "folderB":"./test/b",
-      "groupUUID":null
+      "folderRecursion":true,
+      "syncType":"normal"
     },
     {
       "uuid":2,
       "name":"test sync2",
       "folderA":"./test/b",
       "folderB":"./test/c",
-      "groupUUID":null
+      "folderRecursion":true,
+      "syncType":"normal"
     },
     {
       "uuid":3,
       "name":"test sync3",
       "folderA":"./test/a",
       "folderB":"./test/d",
-      "groupUUID":null
+      "folderRecursion":true,
+      "syncType":"normal"
+
     },
     {
       "uuid":4,
       "name":"ERROR HANDLE",
       "folderA":"./test/a",
       "folderB":"./test2/a",
-      "groupUUID":null
+      "folderRecursion":true,
+      "syncType":"normal"
+    },
+    {
+      "uuid":5,
+      "name":"convert type test",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"convert",
+      "folderAExt": "SRM",
+      "folderBExt": "sav",
+      "caseSensitive:": false
     }
+
   ]
 }

@@ -9,7 +9,6 @@ import (
 
 // initalize global variables (folderLinks, linkGroups)
 var folderLinks FolderLinks
-var folderGroups FolderGroups
 
 // var linkSums = make(map[string][]linkSumItem)
 var linkSums = make(map[string]map[string]time.Time)
@@ -54,37 +53,15 @@ func launchSequence() {
 	json.Unmarshal(linksJson, &folderLinks)
 
 	for i := 0; i < len(folderLinks.FolderLinks); i++ {
+		current := folderLinks.FolderLinks[i]
 		fmt.Println("Loaded Folder Link #" + fmt.Sprint(i+1))
-		fmt.Println("--Name: " + fmt.Sprint(folderLinks.FolderLinks[i].Name))
-		fmt.Println("--UUID: " + fmt.Sprint(folderLinks.FolderLinks[i].UUID))
-		if folderLinks.FolderLinks[i].GroupUUID != 0 {
-			fmt.Println("--Group UUID: " + fmt.Sprint(folderLinks.FolderLinks[i].GroupUUID))
-		}
-		fmt.Println("--Folder A: " + folderLinks.FolderLinks[i].FolderA)
-		fmt.Println("--Folder B: " + folderLinks.FolderLinks[i].FolderB)
-		folderLinks.FolderLinks[i].status = 0
+		fmt.Println("--Name: " + fmt.Sprint(current.Name))
+		fmt.Println("--UUID: " + fmt.Sprint(current.UUID))
+		fmt.Println("--Folder A: " + current.FolderA)
+		fmt.Println("--Folder B: " + current.FolderB)
+		fmt.Println(current.status, current.FolderRecursion, current.SyncType, current.FolderAExt, current.FolderBExt)
 	}
 
-	fmt.Println(" ")
-
-	// // group UUID (if it is apart of a group)
-	// // // groups.json will hold basic info of all groups in the system
-	// // // name and UUID of group
-	groupsJson, groupsError := os.ReadFile("groups.json")
-
-	if groupsError != nil {
-		fmt.Println("Error! Cannot find 'groups.json' in program directory!")
-	}
-
-	// fmt.Println("Opened 'groups.json'!")
-
-	json.Unmarshal(groupsJson, &folderGroups)
-
-	for i := 0; i < len(folderGroups.FolderGroups); i++ {
-		fmt.Println("Loaded Folder Group #" + fmt.Sprint(i+1))
-		fmt.Println("--Name: " + folderGroups.FolderGroups[i].Name)
-		fmt.Println("--UUID: " + fmt.Sprint(folderGroups.FolderGroups[i].UUID))
-	}
 	fmt.Println(" ")
 
 	// Generate/Check linkSums for all links
@@ -94,7 +71,7 @@ func launchSequence() {
 
 	// initalizeLinkSum()
 	// firstBootSync()
-	betterFirstBootSync()
+	firstBootSync()
 	fmt.Println("Launch Sequence Complete!")
 }
 
