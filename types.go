@@ -19,9 +19,9 @@ type FolderLink struct {
 	SyncType        string `json:"syncType"`        //'normal' = bidirectional, 'convert' = change file format (only looks for files in specified format)
 	////Additional properties for 'convert' type
 	//File format used for each folder, respectively
-	FolderAExt    string `json:"folderAExt"`
-	FolderBExt    string `json:"folderBExt"`
-	CaseSensitive bool   `json:"caseSensitive"`
+	FolderAExt       string `json:"folderAExt"`
+	FolderBExt       string `json:"folderBExt"`
+	CaseSensitiveExt bool   `json:"caseSensitive"`
 }
 type Event struct {
 	fileName    string

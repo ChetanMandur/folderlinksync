@@ -84,18 +84,9 @@ func normalCopySync(source string, destination string, newTime time.Time) {
 
 }
 
-func convertCopySync(source string, destination string, newFormat string, newTime time.Time) {
-	_, sourceFile := filepath.Split(source)
-	sourceFileSplit := strings.Split(sourceFile, ".")
-	destinationDir, _ := filepath.Split(destination)
-
-	destinationNewFile := destinationDir + sourceFileSplit[0] + "." + newFormat
-
-	fmt.Println("BETTER COPY SYNC", destinationNewFile)
-
-	copy.Copy(source, destinationNewFile)
-
-	err := os.Chtimes(destinationNewFile, newTime, newTime)
+func newCopySync(folderLink FolderLink, inverse bool, source string, destination string, newTime time.Time) {
+	copy.Copy(source, destination)
+	err := os.Chtimes(destination, newTime, newTime)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -130,6 +121,128 @@ func relativePath(source string, destination string) string {
 
 	return output
 
+}
+
+func newWalkCheck(folderLink FolderLink, inverse bool, source string, destination string, checkedFiles []string) []string {
+
+	filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
+		if err == nil { //make sure there is no error from the walk
+			//just grabbing these to reference later
+			currentFileName := f.Name()
+			currentFileIsDir := f.IsDir()
+			currentFileModTime := f.ModTime()
+			currentFilePath := path //just to make naming the same
+
+			//Building the equivalent path at destination
+			pathArr := []string{destination, currentFileName} //temp array used for pathConnector()
+			destinationFilePath := pathConnector(pathArr)
+
+			if currentFileIsDir && (filepath.Base(currentFilePath) != filepath.Base(source)) { //When file is a directory (and not the root folder), we want to enter it and walk it
+				checkedFiles = newWalkCheck(folderLink, inverse, currentFilePath, destinationFilePath, checkedFiles)
+				return filepath.SkipDir
+			} else if currentFileIsDir && (filepath.Base(currentFilePath) == filepath.Base(source)) { //skips copying root directory, (eg. /a --copies to--> /b/a)
+				return nil
+			} else {
+				var currentRelativePath string
+				//for a convert sync type, we need an extension-less 'currentRelativePath' and specific extensions for 'currentFilePath' and 'destinationFilePath'
+				if folderLink.SyncType == "convert" {
+					currentFileNameSplit := strings.Split(currentFileName, ".")
+					tempFileName := currentFileNameSplit[0]
+					tempFileExt := currentFileNameSplit[1]
+
+					var folderExt string
+					var destExt string
+					if inverse {
+						folderExt = folderLink.FolderBExt
+						destExt = folderLink.FolderAExt
+					} else {
+						folderExt = folderLink.FolderAExt
+						destExt = folderLink.FolderBExt
+					}
+
+					//Check if extensions are case sensitive or not
+					var extensionMatch = false
+					if folderLink.CaseSensitiveExt {
+						extensionMatch = (folderExt == tempFileExt)
+
+					} else {
+						extensionMatch = (strings.EqualFold(folderExt, tempFileExt))
+
+					}
+
+					//if file matches extension conditions, begin generating new 'currentRelativePath', 'currentFilePath', and 'destinationFilePath'
+					if extensionMatch {
+						//Creating extensionless currentFile and destinationFile paths (leads to extensionless currentRelativePath)
+						pathArr := []string{source, tempFileName}
+						tempCurrentFilePath := pathConnector(pathArr)
+
+						pathArr = []string{destination, tempFileName} //temp array used for pathConnector()
+						tempDestinationFilePath := pathConnector(pathArr)
+
+						currentRelativePath = relativePath(tempCurrentFilePath, tempDestinationFilePath)
+
+						//updating currentFile and
+						currentFilePath = tempCurrentFilePath + "." + folderExt
+						destinationFilePath = tempDestinationFilePath + "." + destExt
+					} else {
+						return nil
+					}
+
+				} else {
+					currentRelativePath = relativePath(currentFilePath, destinationFilePath)
+
+				}
+
+				//Current Relative path is used to check which files have been analyzed, needed as recursive folder checks could be enabled
+				// currentRelativePath := relativePath(currentFilePath, destinationFilePath)
+
+				if !(slices.Contains(checkedFiles, currentRelativePath)) { //If the file has not been checked yet
+					// fmt.Println("\n"+currentFilePath, " | ", currentFileModTime) //Source File
+					fmt.Println("\n"+currentRelativePath, " | ", currentFileModTime) //relativePath + source modification time
+
+					//we start opening it and checking it
+					destinationFile, destError := os.Open(destinationFilePath)
+					if destError == nil {
+						destinationFile, destError := destinationFile.Stat()
+						destinationFileModTime := destinationFile.ModTime() //saving that mod time to compare with source
+						if destError == nil {
+							// fmt.Println("("+destinationFilePath, " | ", destinationFileModTime, ")") //Destination File
+
+							if currentFileModTime.After(destinationFileModTime) {
+								fmt.Println("File is more recent in source")
+								newCopySync(folderLink, inverse, currentFilePath, destinationFilePath, currentFileModTime)
+							} else if currentFileModTime.Before(destinationFileModTime) {
+								fmt.Println("File is more recent at destination (", destinationFileModTime, ")")
+								newCopySync(folderLink, inverse, destinationFilePath, currentFilePath, destinationFileModTime)
+							} else if currentFileModTime.Equal(destinationFileModTime) {
+								fmt.Println("Files are in sync")
+							} else {
+								fmt.Println("Yo what", currentFileModTime, destinationFileModTime)
+							}
+							fmt.Print("\n")
+
+						} else {
+							fmt.Println("Error loading file at destionation ", destinationFilePath)
+							// normalCopySync(currentFilePath, destinationFilePath, currentFileModTime)
+						}
+					} else {
+						fmt.Println("File does not exist at destination ", destinationFilePath)
+						newCopySync(folderLink, inverse, currentFilePath, destinationFilePath, currentFileModTime)
+					}
+
+					checkedFiles = append(checkedFiles, currentRelativePath)
+				} else {
+					fmt.Println("Checked file", currentRelativePath)
+				}
+			}
+
+		} else {
+			fmt.Println("Error loading", source)
+		}
+		return nil
+	})
+
+	return checkedFiles
 }
 
 func normalWalkCheck(source string, destination string, checkedFiles []string) []string {
@@ -210,11 +323,11 @@ func firstBootSync() {
 	for _, currentFolderLink := range folderLinks.FolderLinks {
 		switch currentFolderLink.SyncType {
 		case "normal":
-			normalFBS(currentFolderLink)
+			// normalFBS(currentFolderLink)
 			// fmt.Println("skipping normal")
 		case "convert":
-			fmt.Println("skipping convert")
-			// convertFBS(currentFolderLink)
+			// fmt.Println("skipping convert")
+			convertFBS(currentFolderLink)
 		}
 	}
 }
@@ -251,13 +364,13 @@ func convertFBS(folderLink FolderLink) {
 	_, folderBError := os.Open(absFolderB)
 
 	if folderAError == nil && folderBError == nil {
-		// checkedFiles := []string{}
+		checkedFiles := []string{}
 
 		fmt.Println("WALKING FOLDER ", absFolderA)
-		// checkedFiles = convertWalkCheck(absFolderA, absFolderB, folderLink.FolderAExt, folderLink.FolderBExt, checkedFiles)
+		checkedFiles = newWalkCheck(folderLink, false, absFolderA, absFolderB, checkedFiles)
 
 		fmt.Println("WALKING FOLDER ", absFolderB)
-		// convertWalkCheck(absFolderB, absFolderA, folderLink.FolderBExt, folderLink.FolderAExt, checkedFiles)
+		newWalkCheck(folderLink, true, absFolderB, absFolderA, checkedFiles)
 
 		fmt.Println(" ")
 	} else {
