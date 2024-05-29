@@ -18,6 +18,17 @@
       "folderB":"C:\\Users\\Cheta\\Documents\\PPSSPP\\PSP\\SAVEDATA",
       "folderRecursion":true,
       "syncType":"normal"
+    },
+    {
+      "uuid":3,
+      "name":"SNES retroarch to psp",
+      "folderA":"C:\\RetroArch-Win64\\saves\\Snes9x",
+      "folderB":"D:\\PSP\\GAME\\Homebrew\\s9xTYLme_mod\\SAVES",
+      "folderRecursion":false,
+      "syncType":"specific-exts",
+      "folderAExt": "srm",
+      "folderBExt": "srm",
+      "caseSensitive:": false
     }
 
   ]

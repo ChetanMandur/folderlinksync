@@ -87,7 +87,7 @@ func relativePath(source string, destination string) string {
 	output := ""
 	sourceClean := filepath.ToSlash(source)
 	destinationClean := filepath.ToSlash(destination)
-	fmt.Println("relativePath", sourceClean, destinationClean)
+	// fmt.Println("relativePath", sourceClean, destinationClean)
 
 	//Splitting source
 	sourceSplit := strings.Split(sourceClean, "/")
@@ -118,7 +118,7 @@ func relativePath(source string, destination string) string {
 	//starting from the back of each path, keep adding the parts that match
 	for i := 0; i < tempMin; i++ {
 		if sourceSplit[sourceSplitSize-i] == destinationSplit[destinationSplitSize-i] {
-			output += "/" + sourceSplit[sourceSplitSize-i]
+			output = "/" + sourceSplit[sourceSplitSize-i] + output
 		}
 	}
 
@@ -203,7 +203,7 @@ func walkCheck(folderLink FolderLink, inverse bool, source string, destination s
 
 				if !(slices.Contains(checkedFiles, currentRelativePath)) { //If the file has not been checked yet
 					// fmt.Println("\n"+currentFilePath, " | ", currentFileModTime) //Source File
-					fmt.Println("\n"+currentRelativePath, " | ", currentFileModTime) //relativePath + source modification time
+					// fmt.Println("\n"+currentRelativePath, " | ", currentFileModTime) //relativePath + source modification time
 
 					//we start opening it and checking it
 					destinationFile, destError := os.Open(destinationFilePath)
@@ -214,17 +214,22 @@ func walkCheck(folderLink FolderLink, inverse bool, source string, destination s
 							// fmt.Println("("+destinationFilePath, " | ", destinationFileModTime, ")") //Destination File
 
 							if currentFileModTime.After(destinationFileModTime) {
-								fmt.Println("File is more recent in source")
+
+								fmt.Println("\n" + currentRelativePath) //relativePath
+								fmt.Println("File is more recent in source (", currentFileModTime, ")")
 								copySync(folderLink, inverse, currentFilePath, destinationFilePath, currentFileModTime)
 							} else if currentFileModTime.Before(destinationFileModTime) {
+
+								fmt.Println("\n" + currentRelativePath) //relativePath
 								fmt.Println("File is more recent at destination (", destinationFileModTime, ")")
 								copySync(folderLink, inverse, destinationFilePath, currentFilePath, destinationFileModTime)
 							} else if currentFileModTime.Equal(destinationFileModTime) {
-								fmt.Println("Files are in sync")
+
+								// fmt.Println("Files are in sync")
 							} else {
 								fmt.Println("Yo what", currentFileModTime, destinationFileModTime)
 							}
-							fmt.Print("\n")
+							// fmt.Print("\n")
 
 						} else {
 							fmt.Println("Error loading file at destionation ", destinationFilePath)
@@ -237,7 +242,7 @@ func walkCheck(folderLink FolderLink, inverse bool, source string, destination s
 
 					checkedFiles = append(checkedFiles, currentRelativePath)
 				} else {
-					fmt.Println("Checked file", currentRelativePath)
+					// fmt.Println("Checked file", currentRelativePath)
 				}
 			}
 
