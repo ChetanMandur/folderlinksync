@@ -83,28 +83,42 @@ func copySync(folderLink FolderLink, inverse bool, source string, destination st
 }
 
 func relativePath(source string, destination string) string {
-
+	//Preping the strings
 	output := ""
 	sourceClean := filepath.ToSlash(source)
 	destinationClean := filepath.ToSlash(destination)
-	// fmt.Println("relativePath", sourceClean, destinationClean)
+	fmt.Println("relativePath", sourceClean, destinationClean)
 
+	//Splitting source
 	sourceSplit := strings.Split(sourceClean, "/")
 	if len(sourceSplit) == 1 {
 		sourceSplit = strings.Split(sourceClean, "\\")
 
 	}
 
+	//Splitting destination
 	destinationSplit := strings.Split(destinationClean, "/")
 	if len(destinationSplit) == 1 {
 		destinationSplit = strings.Split(destinationClean, "\\")
 	}
 
-	for i := len(sourceSplit) - 1; i >= 0; i-- {
-		if sourceSplit[i] == destinationSplit[i] {
-			output = "/" + sourceSplit[i] + output
-		} else {
-			break
+	////Finding relative path
+	//setting variables we need
+	var tempMin int
+	sourceSplitSize := len(sourceSplit) - 1
+	destinationSplitSize := len(destinationSplit) - 1
+
+	//finding what the smallest length is (this will be our limiter)
+	if sourceSplitSize >= destinationSplitSize {
+		tempMin = destinationSplitSize
+	} else {
+		tempMin = sourceSplitSize
+	}
+
+	//starting from the back of each path, keep adding the parts that match
+	for i := 0; i < tempMin; i++ {
+		if sourceSplit[sourceSplitSize-i] == destinationSplit[destinationSplitSize-i] {
+			output += "/" + sourceSplit[sourceSplitSize-i]
 		}
 	}
 
@@ -127,14 +141,16 @@ func walkCheck(folderLink FolderLink, inverse bool, source string, destination s
 			destinationFilePath := pathConnector(pathArr)
 
 			if currentFileIsDir && (filepath.Base(currentFilePath) != filepath.Base(source)) { //When file is a directory (and not the root folder), we want to enter it and walk it
-				checkedFiles = walkCheck(folderLink, inverse, currentFilePath, destinationFilePath, checkedFiles)
+				if folderLink.FolderRecursion {
+					checkedFiles = walkCheck(folderLink, inverse, currentFilePath, destinationFilePath, checkedFiles)
+				}
 				return filepath.SkipDir
 			} else if currentFileIsDir && (filepath.Base(currentFilePath) == filepath.Base(source)) { //skips copying root directory, (eg. /a --copies to--> /b/a)
 				return nil
 			} else {
 				var currentRelativePath string
 				//for a convert sync type, we need an extension-less 'currentRelativePath' and specific extensions for 'currentFilePath' and 'destinationFilePath'
-				if folderLink.SyncType == "convert" {
+				if folderLink.SyncType == "specific-exts" {
 					currentFileNameSplit := strings.Split(currentFileName, ".")
 					tempFileName := currentFileNameSplit[0]
 					tempFileExt := currentFileNameSplit[1]
@@ -240,6 +256,7 @@ func firstBootSync() {
 		fmt.Println("\n--New Folder Link--")
 		absFolderA, _ := filepath.Abs(currentFolderLink.FolderA)
 		absFolderB, _ := filepath.Abs(currentFolderLink.FolderB)
+		fmt.Println(absFolderA, absFolderB)
 
 		_, folderAError := os.Open(absFolderA)
 		_, folderBError := os.Open(absFolderB)

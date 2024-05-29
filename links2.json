@@ -1,0 +1,24 @@
+{
+  "links":[
+    {
+      "uuid":1,
+      "name":"GBA retroarch to psp",
+      "folderA":"C://RetroArch-Win64/saves/mGBA",
+      "folderB":"D://PSP/GAME/Homebrew/TempGBA/save",
+      "folderRecursion":true,
+      "syncType":"specific-exts",
+      "folderAExt": "SRM",
+      "folderBExt": "sav",
+      "caseSensitive:": false
+    },
+    {
+      "uuid":2,
+      "name":"PSP hardware to ppsspp",
+      "folderA":"D:\\PSP\\SAVEDATA",
+      "folderB":"C:\\Users\\Cheta\\Documents\\PPSSPP\\PSP\\SAVEDATA",
+      "folderRecursion":true,
+      "syncType":"normal"
+    }
+
+  ]
+}

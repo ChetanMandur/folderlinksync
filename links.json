@@ -39,7 +39,7 @@
       "folderA":"./test/gbaSRM",
       "folderB":"./test/gbaSAV",
       "folderRecursion":true,
-      "syncType":"convert",
+      "syncType":"specific-exts",
       "folderAExt": "SRM",
       "folderBExt": "sav",
       "caseSensitive:": false

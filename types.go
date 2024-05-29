@@ -16,8 +16,8 @@ type FolderLink struct {
 	status          int
 	UUID            int    `json:"uuid"`
 	FolderRecursion bool   `json:"folderRecursion"` // whether or not we want to enter/copy folders
-	SyncType        string `json:"syncType"`        //'normal' = bidirectional, 'convert' = change file format (only looks for files in specified format)
-	////Additional properties for 'convert' type
+	SyncType        string `json:"syncType"`        //'normal' = bidirectional, 'specific-exts' = only looks for files in specified format, creates 1:1 copy with different file ext
+	////Additional properties for 'specific-exts' type
 	//File format used for each folder, respectively
 	FolderAExt       string `json:"folderAExt"`
 	FolderBExt       string `json:"folderBExt"`
