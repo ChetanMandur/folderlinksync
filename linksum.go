@@ -75,13 +75,13 @@ func copySync(folderLink *FolderLink, inverse bool, source string, destination s
 	yes := false
 	if yes {
 		copy.Copy(source, destination)
+		err := os.Chtimes(destination, newTime, newTime)
+		if err != nil && yes {
+			fmt.Println(err)
+		}
+
 	} else {
 		fmt.Println(source, destination, "\n")
-
-	}
-	err := os.Chtimes(destination, newTime, newTime)
-	if err == nil {
-		fmt.Println(err)
 	}
 
 }

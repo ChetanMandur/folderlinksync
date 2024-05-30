@@ -17,7 +17,9 @@
       "folderA":"D:\\PSP\\SAVEDATA",
       "folderB":"C:\\Users\\Cheta\\Documents\\PPSSPP\\PSP\\SAVEDATA",
       "folderRecursion":true,
-      "syncType":"normal"
+      "syncType":"normal", 
+      "FolderExclude": ["ARK_01234"]
+
     },
     {
       "uuid":3,
