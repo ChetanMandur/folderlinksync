@@ -19,9 +19,19 @@ type FolderLink struct {
 	SyncType        string `json:"syncType"`        //'normal' = bidirectional, 'specific-exts' = only looks for files in specified format, creates 1:1 copy with different file ext
 	////Additional properties for 'specific-exts' type
 	//File format used for each folder, respectively
-	FolderAExt       string `json:"folderAExt"`
-	FolderBExt       string `json:"folderBExt"`
-	CaseSensitiveExt bool   `json:"caseSensitive"`
+	SpecificExts_FolderA       string `json:"specificExts_FolderA"`
+	SpecificExts_FolderB       string `json:"specificExts_FolderB"`
+	SpecificExts_CaseSensitive bool   `json:"specificExts_CaseSensitive"`
+
+	//In/Ex-clude Files
+	FileInclude []string `json:"fileInclude"`
+	FileExclude []string `json:"fileExclude"`
+	//In/Ex-clude Folders
+	FolderInclude []string `json:"folderInclude"`
+	FolderExclude []string `json:"folderExclude"`
+	//In/Ex-clude Extensions
+	ExtInclude []string `json:"extInclude"`
+	ExtExclude []string `json:"extExclude"`
 }
 type Event struct {
 	fileName    string

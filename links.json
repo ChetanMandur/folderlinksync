@@ -40,10 +40,70 @@
       "folderB":"./test/gbaSAV",
       "folderRecursion":true,
       "syncType":"specific-exts",
-      "folderAExt": "SRM",
-      "folderBExt": "sav",
-      "caseSensitive:": false
-    }
+      "specificExts_FolderA": "SRM",
+      "specificExts_FolderB": "sav",
+      "specificExts_CaseSensitive": false
+    }, 
+    {
+      "uuid":6,
+      "name":"(Ext inexclude test) Include SRM (case sensitive), Exclude sav",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "ExtInclude": ["SRM"],
+      "ExtExclude": ["sav"]
 
+    }, 
+    {
+      "uuid":7,
+      "name":"(File inexclude test) Include uppercase, Exclude lowercase",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "FileInclude": ["uppercase", "include_uppercase"],
+      "FileExclude": ["lowercase"]
+    }, 
+    {
+      "uuid":8,
+      "name":"(Folder inexclude test) Include /include (and root), exclude /exclude",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "FolderInclude": ["include"],
+      "FolderExclude": ["exclude"]
+    }, 
+    {
+      "uuid":9,
+      "name":"(Ext inexclude test) Exclude sav",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "ExtExclude": ["sav"]
+
+    }, 
+    {
+      "uuid":10,
+      "name":"(File inexclude test) Exclude lowercase",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "FileExclude": ["lowercase", "include_lowercase", "other_lowercase", "exclude_lowercase"]
+    }, 
+    {
+      "uuid":11,
+      "name":"(Folder inexclude test) exclude /exclude",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "FolderExclude": ["exclude"]
+    }
+  
   ]
 }
+

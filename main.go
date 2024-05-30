@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -42,7 +43,7 @@ func launchSequence() {
 
 	// // links.json will hold all A <-> B links, where A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links2.json")
+	linksJson, linksError := os.ReadFile("links.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")
@@ -53,13 +54,17 @@ func launchSequence() {
 	json.Unmarshal(linksJson, &folderLinks)
 
 	for i := 0; i < len(folderLinks.FolderLinks); i++ {
-		current := folderLinks.FolderLinks[i]
+
+		//This is the first time in my life where I realized a pointer was actually needed. Wow
+		current := &folderLinks.FolderLinks[i]
 		fmt.Println("Loaded Folder Link #" + fmt.Sprint(i+1))
 		fmt.Println("--Name: " + fmt.Sprint(current.Name))
 		fmt.Println("--UUID: " + fmt.Sprint(current.UUID))
+		current.FolderA, _ = filepath.Abs(current.FolderA) //These 2 values werent updating,
+		current.FolderB, _ = filepath.Abs(current.FolderB) // I realized the worst
 		fmt.Println("--Folder A: " + current.FolderA)
 		fmt.Println("--Folder B: " + current.FolderB)
-		fmt.Println(current.status, current.FolderRecursion, current.SyncType, current.FolderAExt, current.FolderBExt)
+		fmt.Println(current.status, current.FolderRecursion, current.SyncType, current.SpecificExts_FolderA, current.SpecificExts_FolderB, current.SpecificExts_CaseSensitive)
 	}
 
 	fmt.Println(" ")

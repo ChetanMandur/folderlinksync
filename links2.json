@@ -7,9 +7,9 @@
       "folderB":"D://PSP/GAME/Homebrew/TempGBA/save",
       "folderRecursion":true,
       "syncType":"specific-exts",
-      "folderAExt": "SRM",
-      "folderBExt": "sav",
-      "caseSensitive:": false
+      "specificExts_FolderA": "SRM",
+      "specificExts_FolderB": "sav",
+      "specificExts_CaseSensitive:": false
     },
     {
       "uuid":2,
@@ -26,9 +26,9 @@
       "folderB":"D:\\PSP\\GAME\\Homebrew\\s9xTYLme_mod\\SAVES",
       "folderRecursion":false,
       "syncType":"specific-exts",
-      "folderAExt": "srm",
-      "folderBExt": "srm",
-      "caseSensitive:": false
+      "specificExts_FolderA": "srm",
+      "specificExts_FolderB": "srm",
+      "specificExts_CaseSensitive:": false
     }
 
   ]
