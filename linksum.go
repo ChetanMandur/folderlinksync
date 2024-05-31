@@ -311,7 +311,8 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 							fmt.Println("Error loading file at destionation ", destinationFilePath)
 						}
 					} else {
-						fmt.Println("File does not exist at destination (" + currentRelativePath + ") Copying to destination!")
+						fmt.Println("\n" + currentRelativePath) //relativePath
+						fmt.Println("File does not exist at destination. Creating a copy at destination!")
 						copySync(folderLink, inverse, sourceFilePath, destinationFilePath, sourceFileModTime)
 					}
 
