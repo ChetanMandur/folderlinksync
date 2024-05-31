@@ -14,9 +14,46 @@ var folderLinks FolderLinks
 // var linkSums = make(map[string][]linkSumItem)
 var linkSums = make(map[string]map[string]time.Time)
 
+func continuousCheck(folderLink *FolderLink) {
+
+	for {
+		fmt.Println("\n-----", folderLink.Name, "|", folderLink.UUID, "-----")
+
+		_, folderAError := os.Open(folderLink.FolderA)
+		_, folderBError := os.Open(folderLink.FolderB)
+
+		if folderAError == nil && folderBError == nil {
+
+			fmt.Println("WALKING FOLDER ", folderLink.FolderA, "-> ("+folderLink.FolderB+")")
+			checkedFiles := walkCheck(folderLink, false, folderLink.FolderA, folderLink.FolderB, []string(nil))
+
+			fmt.Println("WALKING FOLDER ", folderLink.FolderB, "-> ("+folderLink.FolderA+")")
+			walkCheck(folderLink, true, folderLink.FolderB, folderLink.FolderA, checkedFiles)
+
+			fmt.Println(" ")
+
+		}
+		if folderAError != nil || folderBError != nil {
+			if folderAError != nil {
+				fmt.Println("Error loading links A:", folderAError)
+			} else if folderBError != nil {
+				fmt.Println("Error loading links B:", folderBError)
+			}
+
+		}
+	}
+	<-make(chan struct{})
+
+}
+
 func main() {
 	// ON LAUNCH
 	launchSequence()
+
+	for _, currentFolderLink := range folderLinks.FolderLinks {
+		go continuousCheck(&currentFolderLink)
+	}
+
 	// for {
 	// 	WatcherFactory()
 	// }
@@ -43,7 +80,7 @@ func launchSequence() {
 
 	// // links.json will hold all A <-> B links, where A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links.json")
+	linksJson, linksError := os.ReadFile("links2.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")
