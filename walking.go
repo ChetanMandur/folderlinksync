@@ -11,6 +11,50 @@ import (
 	copy "github.com/otiai10/copy"
 )
 
+// Returns false if file does not pass file filter tests
+func fileFilterCheck(folderLink *FolderLink, sourceFileNameShort string, sourceFileNameExt string) bool {
+	if folderLink.FileExclude != nil {
+		if slices.Contains(folderLink.FileExclude, sourceFileNameShort) {
+			return false
+		}
+	}
+	if folderLink.FileInclude != nil {
+		if !(slices.Contains(folderLink.FileInclude, sourceFileNameShort)) && len(folderLink.FileInclude) != 0 {
+			return false
+		}
+	}
+	if folderLink.ExtExclude != nil {
+		if slices.Contains(folderLink.ExtExclude, sourceFileNameExt) {
+			return false
+		}
+
+	}
+	if folderLink.ExtInclude != nil {
+		if !(slices.Contains(folderLink.ExtInclude, sourceFileNameExt)) && len(folderLink.ExtInclude) != 0 {
+
+			return false
+		}
+
+	}
+	return true
+}
+
+func folderFilterCheck(folderLink *FolderLink, sourceFileName string) bool {
+	if folderLink.FolderExclude != nil {
+		if slices.Contains(folderLink.FolderExclude, sourceFileName) {
+			return false
+		}
+	}
+
+	if folderLink.FolderInclude != nil {
+		if !(slices.Contains(folderLink.FolderInclude, sourceFileName)) && len(folderLink.FolderInclude) != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
 func walkCheck(folderLink *FolderLink, inverse bool, source string, destination string, checkedFiles []string) []string {
 
 	filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
@@ -30,54 +74,14 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 				sourceFileNameExt = sourceFileNameSplit[1]
 			}
 
-			//// Applies filters (if any)
-			//maybe one day I will redo this, but i think this works
-			if folderLink.FileExclude != nil || folderLink.FileInclude != nil || folderLink.FolderInclude != nil || folderLink.FolderExclude != nil || folderLink.ExtExclude != nil || folderLink.ExtInclude != nil {
-				// fmt.Print(sourceFileName, sourceFileNameShort, sourceFileNameExt, "HELLO ")
-				if sourceFileIsDir && (filepath.Base(sourceFilePath) != filepath.Base(source)) {
-
-					if slices.Contains(folderLink.FolderExclude, sourceFileName) {
-						// fmt.Println(sourceFileName, " HIT", "folderLink.FolderExclude")
-						return filepath.SkipDir
-
-					}
-					if !(slices.Contains(folderLink.FolderInclude, sourceFileName)) && len(folderLink.FolderInclude) != 0 {
-						// fmt.Println(sourceFileName, " HIT", "folderLink.FolderInclude")
-
-						return filepath.SkipDir
-					}
-				} else {
-
-					if slices.Contains(folderLink.FileExclude, sourceFileNameShort) {
-						// fmt.Println(sourceFileName, " HIT", "folderLink.FileExclude")
-
-						return nil
-					}
-					if !(slices.Contains(folderLink.FileInclude, sourceFileNameShort)) && len(folderLink.FileInclude) != 0 {
-						// fmt.Println(sourceFileName, " HIT", "folderLink.FileInclude")
-
-						return nil
-					}
-					if slices.Contains(folderLink.ExtExclude, sourceFileNameExt) {
-						// fmt.Println(sourceFileName, " HIT", "folderLink.ExtExclude", sourceFileNameExt)
-
-						return nil
-					}
-					if !(slices.Contains(folderLink.ExtInclude, sourceFileNameExt)) && len(folderLink.ExtInclude) != 0 {
-						// fmt.Println(sourceFileName, " HIT", "folderLink.ExtInclude")
-
-						return nil
-					}
-
-				}
-				// fmt.Print("\n")
-			}
-
 			//// Building the equivalent path at destination
 			destinationFilePath := pathConnector([]string{destination, sourceFileName})
 
 			//// When file is a directory, and not the root folder
 			if sourceFileIsDir && (filepath.Base(sourceFilePath) != filepath.Base(source)) {
+				if !(folderFilterCheck(folderLink, sourceFileName)) {
+					return filepath.SkipDir
+				}
 
 				if folderLink.FolderRecursion {
 					checkedFiles = walkCheck(folderLink, inverse, sourceFilePath, destinationFilePath, checkedFiles)
@@ -91,6 +95,9 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 
 				//// When file is not a directory
 			} else {
+				if !(fileFilterCheck(folderLink, sourceFileNameShort, sourceFileNameExt)) {
+					return nil
+				}
 
 				//// Relative path is the path of the file without directory info beyond root,
 				//// For example, the files C://folderA/folder1/test.txt and C://folderB/folder1/test.txt have the relative path of /folder1/test.txt

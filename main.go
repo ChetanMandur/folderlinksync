@@ -15,6 +15,8 @@ var folderLinks FolderLinks
 // var linkSums = make(map[string][]linkSumItem)
 var linkSums = make(map[string]map[string]time.Time)
 
+//linkSums[folderLinkUUID][relativePath]=modTime
+
 // Global wait group cuz thats how im structuring things
 var wg sync.WaitGroup
 
