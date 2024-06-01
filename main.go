@@ -13,7 +13,7 @@ import (
 var folderLinks FolderLinks
 
 // var linkSums = make(map[string][]linkSumItem)
-var linkSums = make(map[string]map[string]time.Time)
+var linkSums = make(map[int]map[string]time.Time)
 
 //linkSums[folderLinkUUID][relativePath]=modTime
 
@@ -67,9 +67,9 @@ func launchSequence() {
 
 	// Parse JSONs and load into memory
 
-	// // links.json will hold all A <-> B links, where A and B are both paths to a folder/directory
+	// // links.json will hold all A <-> B links, here A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links.json")
+	linksJson, linksError := os.ReadFile("links2.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")
@@ -100,7 +100,7 @@ func launchSequence() {
 	// (ie. each link has two linkSums)
 	// (Used to check for changes on link)
 
-	// initalizeLinkSum()
 	firstBootSync()
+	initalizeLinkSum()
 	fmt.Println("Launch Sequence Complete!")
 }
