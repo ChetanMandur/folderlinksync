@@ -76,9 +76,10 @@ func copySync(folderLink *FolderLink, inverse bool, source string, destination s
 	if yes {
 		copy.Copy(source, destination)
 		err := os.Chtimes(destination, newTime, newTime)
-		if err != nil && yes {
+		if err != nil {
 			fmt.Println(err)
 		}
+		fmt.Println("Copy complete!\n")
 
 	} else {
 		fmt.Println(source, destination, "\n")
@@ -86,6 +87,9 @@ func copySync(folderLink *FolderLink, inverse bool, source string, destination s
 
 }
 
+// /IM PRETTY SURE THERES A BUG WITH THIS THAT INCLUDES PATH STUFF FROM BEYOND FOLDER PATH ROOT (THE ONE IN JSON)
+// / I might be tweaking,, BUT I REALLY GOTTA ACCOUNT FOR THIS (MAKE THE TEST CASE AND MAYBE FIX!!!)
+// / ok tbh im making this rn cuz ima go eat dinner and i might forget heheheheheh DONT FORGET!!!
 func relativePath(source string, destination string) string {
 	//Preping the strings
 	output := ""
@@ -202,8 +206,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 			}
 
 			//// Building the equivalent path at destination
-			destinationPathArr := []string{destination, sourceFileName}
-			destinationFilePath := pathConnector(destinationPathArr)
+			destinationFilePath := pathConnector([]string{destination, sourceFileName})
 
 			//// When file is a directory, and not the root folder
 			if sourceFileIsDir && (filepath.Base(sourceFilePath) != filepath.Base(source)) {
@@ -281,11 +284,11 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 				if !(slices.Contains(checkedFiles, currentRelativePath)) {
 
 					//// Start opening the file and check it out
-					destinationFile, destError := os.Open(destinationFilePath)
-					if destError == nil {
-						destinationFile, destError := destinationFile.Stat() // Grabs more readable data
-						destinationFileModTime := destinationFile.ModTime()  // Saving that mod time to compare with source
-						if destError == nil {
+					destinationFile, destinationError := os.Open(destinationFilePath)
+					if destinationError == nil {
+						destinationFile, destinationError := destinationFile.Stat() // Grabs more readable data
+						destinationFileModTime := destinationFile.ModTime()         // Saving that mod time to compare with source
+						if destinationError == nil {
 
 							if sourceFileModTime.After(destinationFileModTime) {
 
@@ -299,12 +302,6 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 								fmt.Println("File is more recent at destination (", destinationFileModTime, ")")
 								copySync(folderLink, inverse, destinationFilePath, sourceFilePath, destinationFileModTime)
 
-							} else if sourceFileModTime.Equal(destinationFileModTime) {
-
-								return nil // When the files are in sync with each other
-
-							} else {
-								return nil //just in case...
 							}
 
 						} else {
@@ -318,7 +315,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 
 					checkedFiles = append(checkedFiles, currentRelativePath)
 				} else {
-
+					// fmt.Println("Checked!", currentRelativePath)
 					return nil //When a file has been previously checked
 
 				}

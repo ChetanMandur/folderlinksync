@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -14,23 +15,21 @@ var folderLinks FolderLinks
 // var linkSums = make(map[string][]linkSumItem)
 var linkSums = make(map[string]map[string]time.Time)
 
-func continuousCheck(folderLink *FolderLink) {
+// Global wait group cuz thats how im structuring things
+var wg sync.WaitGroup
 
+func continuousCheck(folderLink *FolderLink) {
+	defer wg.Done()
 	for {
-		fmt.Println("\n-----", folderLink.Name, "|", folderLink.UUID, "-----")
 
 		_, folderAError := os.Open(folderLink.FolderA)
 		_, folderBError := os.Open(folderLink.FolderB)
 
 		if folderAError == nil && folderBError == nil {
 
-			fmt.Println("WALKING FOLDER ", folderLink.FolderA, "-> ("+folderLink.FolderB+")")
 			checkedFiles := walkCheck(folderLink, false, folderLink.FolderA, folderLink.FolderB, []string(nil))
 
-			fmt.Println("WALKING FOLDER ", folderLink.FolderB, "-> ("+folderLink.FolderA+")")
 			walkCheck(folderLink, true, folderLink.FolderB, folderLink.FolderA, checkedFiles)
-
-			fmt.Println(" ")
 
 		}
 		if folderAError != nil || folderBError != nil {
@@ -42,7 +41,7 @@ func continuousCheck(folderLink *FolderLink) {
 
 		}
 	}
-	<-make(chan struct{})
+	// <-make(chan struct{})
 
 }
 
@@ -50,24 +49,12 @@ func main() {
 	// ON LAUNCH
 	launchSequence()
 
-	for _, currentFolderLink := range folderLinks.FolderLinks {
-		go continuousCheck(&currentFolderLink)
-	}
-
-	// for {
-	// 	WatcherFactory()
+	// for _, currentFolderLink := range folderLinks.FolderLinks {
+	// 	wg.Add(1)
+	// 	go continuousCheck(&currentFolderLink)
 	// }
-	// for {
-	// 	for _, currentFolderLink := range folderLinks.FolderLinks {
-	// 		// folderLinks is a collection of all the links from links.json, link is a singular item from that collection
 
-	// 		//First check the linkSums, and check if there are any differences
-	// 		// var linkSumACheck bool = linkSumCheck(currFLink.pathA, currFLink.linkSumA)
-	// 		// var linkSumBCheck bool = linkSumCheck(currFLink.pathB, currFLink.linkSumB)
-
-	// 	}
-
-	// }
+	wg.Wait()
 
 }
 
@@ -80,7 +67,7 @@ func launchSequence() {
 
 	// // links.json will hold all A <-> B links, where A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links2.json")
+	linksJson, linksError := os.ReadFile("links.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")
@@ -112,17 +99,6 @@ func launchSequence() {
 	// (Used to check for changes on link)
 
 	// initalizeLinkSum()
-	// firstBootSync()
 	firstBootSync()
 	fmt.Println("Launch Sequence Complete!")
-}
-
-func linkSumCheck(fPath string, linkSum string) bool {
-	//Temporarily create new linkSum using fPath
-	//Compares temp with given
-	if true {
-		return true
-	} else {
-		return false
-	}
 }
