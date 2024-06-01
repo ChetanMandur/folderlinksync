@@ -79,66 +79,53 @@ func copySync(folderLink *FolderLink, inverse bool, source string, destination s
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println("Copy complete!\n")
+		fmt.Println("Copy complete!")
 
 	} else {
-		fmt.Println(source, destination, "\n")
+		fmt.Println(source, destination)
 	}
 
 }
 
-// /IM PRETTY SURE THERES A BUG WITH THIS THAT INCLUDES PATH STUFF FROM BEYOND FOLDER PATH ROOT (THE ONE IN JSON)
-// / I might be tweaking,, BUT I REALLY GOTTA ACCOUNT FOR THIS (MAKE THE TEST CASE AND MAYBE FIX!!!)
-// / ok tbh im making this rn cuz ima go eat dinner and i might forget heheheheheh DONT FORGET!!!
-func relativePath(source string, destination string) string {
+// Given a path (assumed to be within one of the folder link paths), find its relative path from root
+func relativePathFromFolderLinkRoot(folderLink *FolderLink, inverse bool, source string) string {
 	//Preping the strings
 	output := ""
 	sourceClean := filepath.ToSlash(source)
-	destinationClean := filepath.ToSlash(destination)
 
-	// fmt.Println("RELATIVE PATH")
-	// fmt.Println(sourceClean, "\n"+destinationClean)
+	//Finding the root path
+	var sourceRoot string
+	if inverse {
+		sourceRoot = folderLink.FolderB
+
+	} else {
+		sourceRoot = folderLink.FolderA
+
+	}
+
+	//Splitting source root
+	sourceRootSplit := strings.Split(sourceRoot, "/")
+
+	//use backslash if forward slash didnt work
+	if len(sourceRootSplit) == 1 {
+		sourceRootSplit = strings.Split(sourceRoot, "\\")
+	}
 
 	//Splitting source
-	sourceSplit := strings.Split(sourceClean, "/")
-	if len(sourceSplit) == 1 {
-		sourceSplit = strings.Split(sourceClean, "\\")
+	sourceCleanSplit := strings.Split(sourceClean, "/")
+	temp_slash := "/" //We want to continue using the same type of slashes for the relative path output
 
+	//use backslash if forward slash didnt work (and update temp_slash)
+	if len(sourceCleanSplit) == 1 {
+		sourceCleanSplit = strings.Split(sourceClean, "\\")
+		temp_slash = "\\"
 	}
 
-	//Splitting destination
-	destinationSplit := strings.Split(destinationClean, "/")
-	if len(destinationSplit) == 1 {
-		destinationSplit = strings.Split(destinationClean, "\\")
-	}
+	//Chop off source root from source clean
+	sourceReduced := sourceCleanSplit[len(sourceRootSplit):]
 
-	////Finding relative path
-	//setting variables we need
-	var tempMin int
-	sourceSplitSize := len(sourceSplit) - 1
-	destinationSplitSize := len(destinationSplit) - 1
-
-	//finding what the smallest length is (this will be our limiter)
-	if sourceSplitSize >= destinationSplitSize {
-		tempMin = destinationSplitSize
-	} else {
-		tempMin = sourceSplitSize
-	}
-
-	// fmt.Println(sourceSplitSize, "\n", destinationSplitSize)
-
-	//starting from the back of each path, keep adding the parts that match
-	for i := 0; i < tempMin; i++ {
-		if sourceSplit[sourceSplitSize-i] == destinationSplit[destinationSplitSize-i] {
-			output = "/" + sourceSplit[sourceSplitSize-i] + output
-		} else { //once it deviates, we break out!!!!
-			i = tempMin
-		}
-	}
-
-	// fmt.Println(output)
-
-	//return output
+	//make it all into a string and output
+	output = temp_slash + pathConnector(sourceReduced)
 	return output
 
 }
@@ -251,18 +238,18 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 					} else {
 						extensionMatch = (strings.EqualFold(SpecificExts_SourceFolderExt, sourceFileNameExt))
 					}
-					// fmt.Println(SpecificExts_SourceFolderExt, sourceFileNameExt, extensionMatch, folderLink.SpecificExts_CaseSensitive)
 
-					//// If file matches extension conditions, begin generating new 'currentRelativePath', 'currentFilePath', and 'destinationFilePath'
+					//// If file matches extension conditions, begin generating new 'currentRelativePath', 'sourceFilePath', and 'destinationFilePath'
 					if extensionMatch {
-						//Creating extensionless currentFile and destinationFile paths (leads to extensionless currentRelativePath)
-						tempSourceFilePath := pathConnector([]string{source, sourceFileNameShort})
-						tempDestinationFilePath := pathConnector([]string{destination, sourceFileNameShort})
-						currentRelativePath = relativePath(tempSourceFilePath, tempDestinationFilePath)
+						//Creating extensionless sourceFile and destinationFile paths (leads to extensionless currentRelativePath)
+						sourceFilePath = pathConnector([]string{source, sourceFileNameShort})
+						destinationFilePath = pathConnector([]string{destination, sourceFileNameShort})
 
-						//Updating currentFile and destinationFilePath with specific file extension
-						sourceFilePath = tempSourceFilePath + "." + SpecificExts_SourceFolderExt
-						destinationFilePath = tempDestinationFilePath + "." + SpecificExts_DestinationFolderExt
+						currentRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
+
+						//Updating sourceFile and destinationFilePath with specific file extension
+						sourceFilePath = sourceFilePath + "." + SpecificExts_SourceFolderExt
+						destinationFilePath = destinationFilePath + "." + SpecificExts_DestinationFolderExt
 
 						//If they don't match, ignore file
 					} else {
@@ -272,7 +259,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 					//For a normal sync, the file is 1:1, with the only difference being the root folder
 				} else if folderLink.SyncType == "normal" {
 
-					currentRelativePath = relativePath(sourceFilePath, destinationFilePath)
+					currentRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
 
 				} else {
 
@@ -282,6 +269,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 
 				//// Ignore files that we have already checked (saves some compute time and helpful when walking on both A and B)
 				if !(slices.Contains(checkedFiles, currentRelativePath)) {
+					// fmt.Println(currentRelativePath)
 
 					//// Start opening the file and check it out
 					destinationFile, destinationError := os.Open(destinationFilePath)
@@ -333,7 +321,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 func firstBootSync() {
 	fmt.Println("---FIRST BOOT SYNC---")
 	for _, currentFolderLink := range folderLinks.FolderLinks {
-		fmt.Println("\n-----", currentFolderLink.Name, "|", currentFolderLink.UUID, "-----")
+		fmt.Println("\n=======", currentFolderLink.Name, "|", currentFolderLink.UUID, "=======")
 
 		_, folderAError := os.Open(currentFolderLink.FolderA)
 		_, folderBError := os.Open(currentFolderLink.FolderB)
