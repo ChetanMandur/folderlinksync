@@ -69,7 +69,7 @@ func launchSequence() {
 
 	// // links.json will hold all A <-> B links, here A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links2.json")
+	linksJson, linksError := os.ReadFile("links.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")

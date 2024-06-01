@@ -103,7 +103,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 				//// For example, the files C://folderA/folder1/test.txt and C://folderB/folder1/test.txt have the relative path of /folder1/test.txt
 				//// This is useful to make note of each file, including their position in deep root
 				//// In our case, we take the file @ source and file @ destionation (always assume there is one, as thats the goal) and generate the relative path
-				var currentRelativePath string
+				var fileRelativePath string
 
 				//// For a convert sync type, we need an extension-less 'currentRelativePath' and specific extensions for 'currentFilePath' and 'destinationFilePath'
 				if folderLink.SyncType == "specific-exts" {
@@ -133,7 +133,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 						sourceFilePath = pathConnector([]string{source, sourceFileNameShort})
 						destinationFilePath = pathConnector([]string{destination, sourceFileNameShort})
 
-						currentRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
+						fileRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
 
 						//Updating sourceFile and destinationFilePath with specific file extension
 						sourceFilePath = sourceFilePath + "." + SpecificExts_SourceFolderExt
@@ -147,7 +147,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 					//For a normal sync, the file is 1:1, with the only difference being the root folder
 				} else if folderLink.SyncType == "normal" {
 
-					currentRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
+					fileRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
 
 				} else {
 
@@ -156,7 +156,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 				}
 
 				//// Ignore files that we have already checked (saves some compute time and helpful when walking on both A and B)
-				if !(slices.Contains(checkedFiles, currentRelativePath)) {
+				if !(slices.Contains(checkedFiles, fileRelativePath)) {
 					// fmt.Println(currentRelativePath)
 
 					//// Start opening the file and check it out
@@ -168,15 +168,15 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 
 							if sourceFileModTime.After(destinationFileModTime) {
 
-								fmt.Println("\n" + currentRelativePath)
+								fmt.Println("\n" + fileRelativePath)
 								fmt.Println("File is more recent in source (", sourceFileModTime, ")")
-								copySync(folderLink, inverse, sourceFilePath, destinationFilePath, sourceFileModTime)
+								copySync(folderLink, inverse, fileRelativePath, sourceFileModTime)
 
 							} else if sourceFileModTime.Before(destinationFileModTime) {
 
-								fmt.Println("\n" + currentRelativePath) //relativePath
+								fmt.Println("\n" + fileRelativePath) //relativePath
 								fmt.Println("File is more recent at destination (", destinationFileModTime, ")")
-								copySync(folderLink, inverse, destinationFilePath, sourceFilePath, destinationFileModTime)
+								copySync(folderLink, inverse, fileRelativePath, destinationFileModTime)
 
 							}
 
@@ -184,12 +184,12 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 							fmt.Println("Error loading file at destionation ", destinationFilePath)
 						}
 					} else {
-						fmt.Println("\n" + currentRelativePath) //relativePath
+						fmt.Println("\n" + fileRelativePath) //relativePath
 						fmt.Println("File does not exist at destination. Creating a copy at destination!")
-						copySync(folderLink, inverse, sourceFilePath, destinationFilePath, sourceFileModTime)
+						copySync(folderLink, inverse, fileRelativePath, sourceFileModTime)
 					}
 
-					checkedFiles = append(checkedFiles, currentRelativePath)
+					checkedFiles = append(checkedFiles, fileRelativePath)
 				} else {
 					// fmt.Println("Checked!", currentRelativePath)
 					return nil //When a file has been previously checked
@@ -222,8 +222,20 @@ func pathConnector(locations []string) string {
 	return output
 }
 
-func copySync(folderLink *FolderLink, inverse bool, source string, destination string, newTime time.Time) {
+func copySync(folderLink *FolderLink, inverse bool, relativePath string, newTime time.Time) {
 	yes := false
+	var source string
+	var destination string
+
+	if !inverse {
+		source = folderLink.FolderA + relativePath
+		destination = folderLink.FolderB + relativePath
+	} else {
+		source = folderLink.FolderB + relativePath
+		destination = folderLink.FolderA + relativePath
+	}
+	source = filepath.Clean(source)
+	destination = filepath.Clean(destination)
 	if yes {
 		copy.Copy(source, destination)
 		err := os.Chtimes(destination, newTime, newTime)

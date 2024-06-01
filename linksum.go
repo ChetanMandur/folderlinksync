@@ -90,39 +90,28 @@ func linkSumWalk(folderLink *FolderLink, inverse bool, source string, checkedFil
 					} else {
 						SpecificExts_SourceFolderExt = folderLink.SpecificExts_FolderA
 					}
-
 					//// Check if extensions are case sensitive or not
 					var extensionMatch = false
 					if folderLink.SpecificExts_CaseSensitive {
 						extensionMatch = (SpecificExts_SourceFolderExt == sourceFileNameExt)
-
 					} else {
 						extensionMatch = (strings.EqualFold(SpecificExts_SourceFolderExt, sourceFileNameExt))
 					}
-
 					//// If file matches extension conditions, begin generating new 'currentRelativePath', 'sourceFilePath', and 'destinationFilePath'
 					if extensionMatch {
 						//Creating extensionless sourceFile and destinationFile paths (leads to extensionless currentRelativePath)
 						sourceFilePath = pathConnector([]string{source, sourceFileNameShort})
-
 						currentRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
-
 						//If they don't match, ignore file
 					} else {
 						return nil
 					}
-
 					//For a normal sync, the file is 1:1, with the only difference being the root folder
 				} else if folderLink.SyncType == "normal" {
-
 					currentRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
-
 				} else {
-
 					return nil
-
 				}
-
 				//// Ignore files that we have already checked (saves some compute time and helpful when walking on both A and B)
 				if !(slices.Contains(checkedFiles, currentRelativePath)) {
 					linkSums[folderLink.UUID][currentRelativePath] = sourceFileModTime
