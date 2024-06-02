@@ -12,15 +12,16 @@ func linkSumRoutine(FolderLink *FolderLink) {
 	defer wg.Done()
 
 	fmt.Println("\n=======", FolderLink.Name, "|", FolderLink.UUID, "=======")
+	fmt.Println("Folder A: ", FolderLink.FolderA, "\nFolder B:", FolderLink.FolderB)
 
 	for {
+
 		_, folderAError := os.Open(FolderLink.FolderA)
 		_, folderBError := os.Open(FolderLink.FolderB)
 
 		if folderAError == nil && folderBError == nil {
 			checkedFiles := []string{}
 			walkItems := []WalkItem{}
-			fmt.Println("Folder A: ", FolderLink.FolderA, "\nFolder B:", FolderLink.FolderB)
 
 			walkItems, checkedFiles = walkCheck(FolderLink, false, FolderLink.FolderA, FolderLink.FolderB, checkedFiles, walkItems)
 
@@ -36,7 +37,7 @@ func linkSumRoutine(FolderLink *FolderLink) {
 					fmt.Println("I THINK THIS FILE DOESNT EXIST ANYMORE", checkedFiles, key)
 				}
 			}
-			fmt.Println(" ")
+			// fmt.Println(" ")
 		} else {
 			if folderAError != nil {
 				fmt.Println("Error loading links A:", folderAError)
@@ -51,16 +52,11 @@ func linkSumRoutine(FolderLink *FolderLink) {
 }
 
 func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string) []string {
-	//Splits the struct into its own variables
-
-	//Paths for file @ each location
-	// _, _ := walkItem.buildPaths()
 	folderLink, _, relativePath := walkItem.properties()
 
 	if linkSums[folderLink.UUID] == nil {
-		fmt.Print("LinkSum at UUID does not exist")
+		fmt.Print("LinkSum at UUID ", folderLink.UUID, " does not exist... Creating one!\n")
 		linkSums[folderLink.UUID] = make(map[string]time.Time)
-		fmt.Print("... Creating one!\n")
 	}
 
 	status, time := walkItem.syncStatus()
@@ -72,22 +68,21 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string) []string {
 		//For when the files are not in sync, keep trying to copy until it reports synced
 		for status != "INSYNC" {
 			walkItem.quickSync()
-			checkedFiles = append(checkedFiles, relativePath)
-			// status = "INSYNC" //DELETE THIS LATER CUZ THIS IS ONLY FOR DEBUGGING (im not copying anything over rn so it will never change)
+			status, time = walkItem.syncStatus()
 		}
 
 		//This means that the value @ relative path is not up to date
 		if linkSums[folderLink.UUID][relativePath].IsZero() {
 			// fmt.Println("linksum reporting zero")
 			linkSums[folderLink.UUID][relativePath] = time
-			fmt.Println(linkSums[folderLink.UUID][relativePath])
+			fmt.Println("added to linksum", relativePath, linkSums[folderLink.UUID][relativePath])
 
 		}
 
 		if linkSums[folderLink.UUID][relativePath] != time {
-			fmt.Println("linksum time not the same")
+			// fmt.Println("linksum time not the same")
 			linkSums[folderLink.UUID][relativePath] = time
-			fmt.Println(linkSums[folderLink.UUID][relativePath])
+			fmt.Println("updated linksum", relativePath, linkSums[folderLink.UUID][relativePath])
 
 		}
 

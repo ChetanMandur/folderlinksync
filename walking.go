@@ -197,7 +197,7 @@ func pathConnector(locations []string) string {
 // Copies file to destination, and updates the file's mod time to the given mod time
 func copySync(source string, destination string, newTime time.Time) {
 	//True= actually copies False = Just print the paths it was gonna use (to -> from)
-	yes := false
+	yes := true
 
 	if yes {
 		copy.Copy(source, destination)
@@ -353,7 +353,8 @@ func firstBootSync() {
 		} else {
 			if folderAError != nil {
 				fmt.Println("Error loading links A:", folderAError)
-			} else if folderBError != nil {
+			}
+			if folderBError != nil {
 				fmt.Println("Error loading links B:", folderBError)
 			}
 
