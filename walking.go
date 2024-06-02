@@ -216,9 +216,7 @@ func copySync(source string, destination string, newTime time.Time) {
 func walkItemCompareCopySync(walkItem *WalkItem) {
 
 	//Splits the struct into its own variables
-	folderLink := walkItem.FolderLink
-	inverse := walkItem.Inverse
-	relativePath := walkItem.RelativePath
+	folderLink, inverse, relativePath := walkItem.properties()
 
 	//Paths for file @ each location
 	var source string
@@ -252,7 +250,7 @@ func walkItemCompareCopySync(walkItem *WalkItem) {
 
 	//Opening destination AND checking for error, cuz error means file does not exist (aka something important)
 	destinationFile, destinationError := os.Open(destination)
-	fmt.Println("\n" + relativePath)
+	// fmt.Println("\n" + relativePath)
 	if destinationError == nil {
 		destinationFileStat, destinationError := destinationFile.Stat()
 
@@ -262,23 +260,23 @@ func walkItemCompareCopySync(walkItem *WalkItem) {
 
 			if sourceFileModTime.After(destinationFileModTime) {
 
-				fmt.Println("File is more recent in source (", source, sourceFileModTime, ")")
+				fmt.Println("\nFile is more recent in source (", source, sourceFileModTime, ")")
 				copySync(source, destination, sourceFileModTime)
 
 			} else if sourceFileModTime.Before(destinationFileModTime) {
 
-				fmt.Println("File is more recent at destination (", destination, destinationFileModTime, ")")
+				fmt.Println("\nFile is more recent at destination (", destination, destinationFileModTime, ")")
 				copySync(destination, source, destinationFileModTime)
 
 			} else {
-				fmt.Println("Files are in sync!")
+				// fmt.Println("Files are in sync!")
 			}
 
 		} else {
-			fmt.Println("Error loading file at destionation ", destination)
+			fmt.Println("\nError loading file at destionation ", destination)
 		}
 	} else {
-		fmt.Println("File does not exist at destination.(", destination, ") Copying and Creating!")
+		fmt.Println("\nFile does not exist at destination.(", destination, ") Copying and Creating!")
 		copySync(source, destination, sourceFileModTime)
 	}
 

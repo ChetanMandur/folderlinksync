@@ -1,5 +1,11 @@
 package main
 
+import (
+	"os"
+	"path/filepath"
+	"time"
+)
+
 type FolderLinks struct {
 	FolderLinks []FolderLink `json:"links"`
 }
@@ -33,4 +39,97 @@ type WalkItem struct {
 	FolderLink   *FolderLink
 	Inverse      bool
 	RelativePath string
+}
+
+func (w *WalkItem) properties() (FolderLink *FolderLink, Inverse bool, RelativePath string) {
+	return w.FolderLink, w.Inverse, w.RelativePath
+}
+
+func (w *WalkItem) buildPaths() (source string, destination string) {
+	folderLink, inverse, relativePath := w.properties()
+
+	//Building the paths
+	if !inverse {
+		source = folderLink.FolderA + relativePath
+		destination = folderLink.FolderB + relativePath
+		if folderLink.SyncType == "specific-exts" {
+			source += "." + folderLink.SpecificExts_FolderA
+			destination += "." + folderLink.SpecificExts_FolderB
+		}
+	} else {
+		source = folderLink.FolderB + relativePath
+		destination = folderLink.FolderA + relativePath
+		if folderLink.SyncType == "specific-exts" {
+			source += "." + folderLink.SpecificExts_FolderB
+			destination += "." + folderLink.SpecificExts_FolderA
+		}
+	}
+
+	//Clean the compiled paths
+	source = filepath.Clean(source)
+	destination = filepath.Clean(destination)
+
+	return source, destination
+
+}
+
+// Outputs the current status between the two files refered to in WalkItem
+func (w *WalkItem) syncStatus() (status string, mostRecentTime time.Time) {
+	// _, _, relativePath := w.properties()
+	source, destination := w.buildPaths()
+
+	//Opening the files (YOLO for the errors on source, im hoping no errors cuz it was read w/o error during its walk find)
+	sourceFile, _ := os.Open(source)
+	sourceFileStat, _ := sourceFile.Stat()
+	sourceFileModTime := sourceFileStat.ModTime()
+
+	//Opening destination AND checking for error, cuz error means file does not exist (aka something important)
+	destinationFile, destinationError := os.Open(destination)
+	// fmt.Println("\n" + relativePath)
+	if destinationError == nil {
+		destinationFileStat, destinationError := destinationFile.Stat()
+
+		if destinationError == nil {
+			// No errors means we are in! We grab the mod time for the destination file and begin our work of finding the most up-to date version
+			destinationFileModTime := destinationFileStat.ModTime()
+
+			if sourceFileModTime.After(destinationFileModTime) {
+
+				// fmt.Println("File is more recent in source (", source, sourceFileModTime, ")")
+				return "SOURCE=RECENT", sourceFileModTime
+
+			} else if sourceFileModTime.Before(destinationFileModTime) {
+
+				// fmt.Println("File is more recent at destination (", destination, destinationFileModTime, ")")
+				return "DESTINATION=RECENT", destinationFileModTime
+
+			} else {
+				// fmt.Println("Files are in sync!")
+				return "INSYNC", sourceFileModTime
+			}
+
+		} else {
+			// fmt.Println("Error loading file at destionation ", destination)
+			return "ERROR", time.Time{}
+		}
+	} else {
+		// fmt.Println("File does not exist at destination.(", destination, ") Copying and Creating!")
+		return "DESTINATION!=EXIST", sourceFileModTime
+	}
+
+}
+
+// Outputs the current status between the two files refered to in WalkItem
+func (w *WalkItem) quickSync() {
+	// _, _, relativePath := w.properties()
+	source, destination := w.buildPaths()
+	status, time := w.syncStatus()
+	switch status {
+	case "SOURCE=RECENT", "DESTINATION!=EXIST":
+		copySync(source, destination, time)
+	case "DESTINATION=RECENT":
+		copySync(destination, source, time)
+
+	}
+
 }

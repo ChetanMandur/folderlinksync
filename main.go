@@ -20,32 +20,32 @@ var linkSums = make(map[int]map[string]time.Time)
 // Global wait group cuz thats how im structuring things
 var wg sync.WaitGroup
 
-func continuousCheck(folderLink *FolderLink) {
-	defer wg.Done()
-	for {
+// func continuousCheck(folderLink *FolderLink) {
+// 	defer wg.Done()
+// 	for {
 
-		_, folderAError := os.Open(folderLink.FolderA)
-		_, folderBError := os.Open(folderLink.FolderB)
+// 		_, folderAError := os.Open(folderLink.FolderA)
+// 		_, folderBError := os.Open(folderLink.FolderB)
 
-		if folderAError == nil && folderBError == nil {
+// 		if folderAError == nil && folderBError == nil {
 
-			walkItems, checkedFiles := walkCheck(folderLink, false, folderLink.FolderA, folderLink.FolderB, []string{}, []WalkItem{})
+// 			walkItems, checkedFiles := walkCheck(folderLink, false, folderLink.FolderA, folderLink.FolderB, []string{}, []WalkItem{})
 
-			walkItems, _ = walkCheck(folderLink, true, folderLink.FolderB, folderLink.FolderA, checkedFiles, walkItems)
+// 			walkItems, _ = walkCheck(folderLink, true, folderLink.FolderB, folderLink.FolderA, checkedFiles, walkItems)
 
-		}
-		if folderAError != nil || folderBError != nil {
-			if folderAError != nil {
-				fmt.Println("Error loading links A:", folderAError)
-			} else if folderBError != nil {
-				fmt.Println("Error loading links B:", folderBError)
-			}
+// 		}
+// 		if folderAError != nil || folderBError != nil {
+// 			if folderAError != nil {
+// 				fmt.Println("Error loading links A:", folderAError)
+// 			} else if folderBError != nil {
+// 				fmt.Println("Error loading links B:", folderBError)
+// 			}
 
-		}
-	}
-	// <-make(chan struct{})
+// 		}
+// 	}
+// 	// <-make(chan struct{})
 
-}
+// }
 
 func main() {
 	// ON LAUNCH
@@ -53,7 +53,8 @@ func main() {
 
 	// for _, currentFolderLink := range folderLinks.FolderLinks {
 	// 	wg.Add(1)
-	// 	go continuousCheck(&currentFolderLink)
+	// 	go linkSumRoutine(&currentFolderLink)
+	// 	// go continuousCheck(&currentFolderLink)
 	// }
 
 	wg.Wait()
