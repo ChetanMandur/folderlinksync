@@ -101,6 +101,6 @@ func launchSequence() {
 	// (Used to check for changes on link)
 
 	firstBootSync()
-	initalizeLinkSum()
+	// initalizeLinkSum()
 	fmt.Println("Launch Sequence Complete!")
 }

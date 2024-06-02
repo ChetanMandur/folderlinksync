@@ -292,3 +292,32 @@ func relativePathFromFolderLinkRoot(folderLink *FolderLink, inverse bool, source
 	return output
 
 }
+
+func firstBootSync() {
+	fmt.Println("---FIRST BOOT SYNC---")
+	for _, currentFolderLink := range folderLinks.FolderLinks {
+		fmt.Println("\n=======", currentFolderLink.Name, "|", currentFolderLink.UUID, "=======")
+
+		_, folderAError := os.Open(currentFolderLink.FolderA)
+		_, folderBError := os.Open(currentFolderLink.FolderB)
+
+		if folderAError == nil && folderBError == nil {
+			checkedFiles := []string{}
+
+			fmt.Println("WALKING FOLDER ", currentFolderLink.FolderA, "-> ("+currentFolderLink.FolderB+")")
+			checkedFiles = walkCheck(&currentFolderLink, false, currentFolderLink.FolderA, currentFolderLink.FolderB, checkedFiles)
+
+			fmt.Println("WALKING FOLDER ", currentFolderLink.FolderB, "-> ("+currentFolderLink.FolderA+")")
+			walkCheck(&currentFolderLink, true, currentFolderLink.FolderB, currentFolderLink.FolderA, checkedFiles)
+
+			fmt.Println(" ")
+		} else {
+			if folderAError != nil {
+				fmt.Println("Error loading links A:", folderAError)
+			} else if folderBError != nil {
+				fmt.Println("Error loading links B:", folderBError)
+			}
+
+		}
+	}
+}
