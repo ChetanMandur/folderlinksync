@@ -40,7 +40,8 @@ func linkSumRoutine(FolderLink *FolderLink) {
 		} else {
 			if folderAError != nil {
 				fmt.Println("Error loading links A:", folderAError)
-			} else if folderBError != nil {
+			}
+			if folderBError != nil {
 				fmt.Println("Error loading links B:", folderBError)
 			}
 
@@ -67,13 +68,15 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string) []string {
 
 	// fmt.Println("\n", relativePath)
 	if status != "ERROR" {
-		for status != "INSYNC" {
 
+		//For when the files are not in sync, keep trying to copy until it reports synced
+		for status != "INSYNC" {
 			walkItem.quickSync()
 			checkedFiles = append(checkedFiles, relativePath)
-			status = "INSYNC" //DELETE THIS LATER CUZ THIS IS ONLY FOR DEBUGGING (im not copying anything over rn so it will never change)
+			// status = "INSYNC" //DELETE THIS LATER CUZ THIS IS ONLY FOR DEBUGGING (im not copying anything over rn so it will never change)
 		}
 
+		//This means that the value @ relative path is not up to date
 		if linkSums[folderLink.UUID][relativePath].IsZero() {
 			// fmt.Println("linksum reporting zero")
 			linkSums[folderLink.UUID][relativePath] = time

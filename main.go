@@ -51,11 +51,11 @@ func main() {
 	// ON LAUNCH
 	launchSequence()
 
-	// for _, currentFolderLink := range folderLinks.FolderLinks {
-	// 	wg.Add(1)
-	// 	go linkSumRoutine(&currentFolderLink)
-	// 	// go continuousCheck(&currentFolderLink)
-	// }
+	for _, currentFolderLink := range folderLinks.FolderLinks {
+		wg.Add(1)
+		go linkSumRoutine(&currentFolderLink)
+		// go continuousCheck(&currentFolderLink)
+	}
 
 	wg.Wait()
 

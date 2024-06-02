@@ -39,44 +39,49 @@ type WalkItem struct {
 	FolderLink   *FolderLink
 	Inverse      bool
 	RelativePath string
+	source       string
+	destination  string
 }
 
 func (w *WalkItem) properties() (FolderLink *FolderLink, Inverse bool, RelativePath string) {
 	return w.FolderLink, w.Inverse, w.RelativePath
 }
 
-func (w *WalkItem) buildPaths() (source string, destination string) {
+func (w *WalkItem) itemPaths() (source string, destination string) {
 	folderLink, inverse, relativePath := w.properties()
 
-	//Building the paths
-	if !inverse {
-		source = folderLink.FolderA + relativePath
-		destination = folderLink.FolderB + relativePath
-		if folderLink.SyncType == "specific-exts" {
-			source += "." + folderLink.SpecificExts_FolderA
-			destination += "." + folderLink.SpecificExts_FolderB
+	if w.source == "" || w.destination == "" {
+		//Building the paths
+		if !inverse {
+			source = folderLink.FolderA + relativePath
+			destination = folderLink.FolderB + relativePath
+			if folderLink.SyncType == "specific-exts" {
+				source += "." + folderLink.SpecificExts_FolderA
+				destination += "." + folderLink.SpecificExts_FolderB
+			}
+		} else {
+			source = folderLink.FolderB + relativePath
+			destination = folderLink.FolderA + relativePath
+			if folderLink.SyncType == "specific-exts" {
+				source += "." + folderLink.SpecificExts_FolderB
+				destination += "." + folderLink.SpecificExts_FolderA
+			}
 		}
-	} else {
-		source = folderLink.FolderB + relativePath
-		destination = folderLink.FolderA + relativePath
-		if folderLink.SyncType == "specific-exts" {
-			source += "." + folderLink.SpecificExts_FolderB
-			destination += "." + folderLink.SpecificExts_FolderA
-		}
+
+		//Clean the compiled paths
+		w.source = filepath.Clean(source)
+		w.destination = filepath.Clean(destination)
+
 	}
 
-	//Clean the compiled paths
-	source = filepath.Clean(source)
-	destination = filepath.Clean(destination)
-
-	return source, destination
+	return w.source, w.destination
 
 }
 
 // Outputs the current status between the two files refered to in WalkItem
 func (w *WalkItem) syncStatus() (status string, mostRecentTime time.Time) {
 	// _, _, relativePath := w.properties()
-	source, destination := w.buildPaths()
+	source, destination := w.itemPaths()
 
 	//Opening the files (YOLO for the errors on source, im hoping no errors cuz it was read w/o error during its walk find)
 	sourceFile, _ := os.Open(source)
@@ -121,8 +126,7 @@ func (w *WalkItem) syncStatus() (status string, mostRecentTime time.Time) {
 
 // Outputs the current status between the two files refered to in WalkItem
 func (w *WalkItem) quickSync() {
-	// _, _, relativePath := w.properties()
-	source, destination := w.buildPaths()
+	source, destination := w.itemPaths()
 	status, time := w.syncStatus()
 	switch status {
 	case "SOURCE=RECENT", "DESTINATION!=EXIST":
