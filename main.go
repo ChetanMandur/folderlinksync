@@ -29,9 +29,9 @@ func continuousCheck(folderLink *FolderLink) {
 
 		if folderAError == nil && folderBError == nil {
 
-			checkedFiles := walkCheck(folderLink, false, folderLink.FolderA, folderLink.FolderB, []string(nil))
+			walkItems, checkedFiles := walkCheck(folderLink, false, folderLink.FolderA, folderLink.FolderB, []string{}, []WalkItem{})
 
-			walkCheck(folderLink, true, folderLink.FolderB, folderLink.FolderA, checkedFiles)
+			walkItems, _ = walkCheck(folderLink, true, folderLink.FolderB, folderLink.FolderA, checkedFiles, walkItems)
 
 		}
 		if folderAError != nil || folderBError != nil {
@@ -69,7 +69,7 @@ func launchSequence() {
 
 	// // links.json will hold all A <-> B links, here A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links.json")
+	linksJson, linksError := os.ReadFile("links2.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")

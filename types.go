@@ -1,9 +1,5 @@
 package main
 
-import (
-	"github.com/fsnotify/fsnotify"
-)
-
 type FolderLinks struct {
 	FolderLinks []FolderLink `json:"links"`
 }
@@ -33,9 +29,8 @@ type FolderLink struct {
 	ExtInclude []string `json:"extInclude"`
 	ExtExclude []string `json:"extExclude"`
 }
-type Event struct {
-	fileName    string
-	path        string
-	isDirectory bool
-	op          fsnotify.Op
+type WalkItem struct {
+	FolderLink   *FolderLink
+	Inverse      bool
+	RelativePath string
 }

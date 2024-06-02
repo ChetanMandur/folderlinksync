@@ -55,7 +55,7 @@ func folderFilterCheck(folderLink *FolderLink, sourceFileName string) bool {
 	return true
 }
 
-func walkCheck(folderLink *FolderLink, inverse bool, source string, destination string, checkedFiles []string) []string {
+func walkCheck(folderLink *FolderLink, inverse bool, source string, destination string, checkedFiles []string, walkItems []WalkItem) ([]WalkItem, []string) {
 
 	filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
 		if err == nil { //make sure there is no error from the walk
@@ -63,7 +63,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 			//// Grabbing file props as variables
 			sourceFileName := f.Name()
 			sourceFileIsDir := f.IsDir()
-			sourceFileModTime := f.ModTime()
+			// sourceFileModTime := f.ModTime()
 			sourceFilePath := path //just to make naming the same
 
 			sourceFileNameSplit := strings.Split(sourceFileName, ".")
@@ -84,7 +84,8 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 				}
 
 				if folderLink.FolderRecursion {
-					checkedFiles = walkCheck(folderLink, inverse, sourceFilePath, destinationFilePath, checkedFiles)
+
+					walkItems, checkedFiles = walkCheck(folderLink, inverse, sourceFilePath, destinationFilePath, checkedFiles, walkItems)
 				}
 				return filepath.SkipDir
 
@@ -109,13 +110,13 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 				if folderLink.SyncType == "specific-exts" {
 					//// Grabbing folder props for Specific Exts as variables
 					var SpecificExts_SourceFolderExt string
-					var SpecificExts_DestinationFolderExt string
+					// var SpecificExts_DestinationFolderExt string
 					if inverse {
 						SpecificExts_SourceFolderExt = folderLink.SpecificExts_FolderB
-						SpecificExts_DestinationFolderExt = folderLink.SpecificExts_FolderA
+						// SpecificExts_DestinationFolderExt = folderLink.SpecificExts_FolderA
 					} else {
 						SpecificExts_SourceFolderExt = folderLink.SpecificExts_FolderA
-						SpecificExts_DestinationFolderExt = folderLink.SpecificExts_FolderB
+						// SpecificExts_DestinationFolderExt = folderLink.SpecificExts_FolderB
 					}
 
 					//// Check if extensions are case sensitive or not
@@ -131,13 +132,13 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 					if extensionMatch {
 						//Creating extensionless sourceFile and destinationFile paths (leads to extensionless currentRelativePath)
 						sourceFilePath = pathConnector([]string{source, sourceFileNameShort})
-						destinationFilePath = pathConnector([]string{destination, sourceFileNameShort})
+						// destinationFilePath = pathConnector([]string{destination, sourceFileNameShort})
 
 						fileRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
 
 						//Updating sourceFile and destinationFilePath with specific file extension
-						sourceFilePath = sourceFilePath + "." + SpecificExts_SourceFolderExt
-						destinationFilePath = destinationFilePath + "." + SpecificExts_DestinationFolderExt
+						// sourceFilePath = sourceFilePath + "." + SpecificExts_SourceFolderExt
+						// destinationFilePath = destinationFilePath + "." + SpecificExts_DestinationFolderExt
 
 						//If they don't match, ignore file
 					} else {
@@ -157,41 +158,12 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 
 				//// Ignore files that we have already checked (saves some compute time and helpful when walking on both A and B)
 				if !(slices.Contains(checkedFiles, fileRelativePath)) {
-					// fmt.Println(currentRelativePath)
 
-					//// Start opening the file and check it out
-					destinationFile, destinationError := os.Open(destinationFilePath)
-					if destinationError == nil {
-						destinationFile, destinationError := destinationFile.Stat() // Grabs more readable data
-						destinationFileModTime := destinationFile.ModTime()         // Saving that mod time to compare with source
-						if destinationError == nil {
-
-							if sourceFileModTime.After(destinationFileModTime) {
-
-								fmt.Println("\n" + fileRelativePath)
-								fmt.Println("File is more recent in source (", sourceFileModTime, ")")
-								copySync(folderLink, inverse, fileRelativePath, sourceFileModTime)
-
-							} else if sourceFileModTime.Before(destinationFileModTime) {
-
-								fmt.Println("\n" + fileRelativePath) //relativePath
-								fmt.Println("File is more recent at destination (", destinationFileModTime, ")")
-								copySync(folderLink, inverse, fileRelativePath, destinationFileModTime)
-
-							}
-
-						} else {
-							fmt.Println("Error loading file at destionation ", destinationFilePath)
-						}
-					} else {
-						fmt.Println("\n" + fileRelativePath) //relativePath
-						fmt.Println("File does not exist at destination. Creating a copy at destination!")
-						copySync(folderLink, inverse, fileRelativePath, sourceFileModTime)
-					}
-
+					// fmt.Println("Opened!", fileRelativePath)
+					walkItems = append(walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: fileRelativePath})
 					checkedFiles = append(checkedFiles, fileRelativePath)
 				} else {
-					// fmt.Println("Checked!", currentRelativePath)
+					// fmt.Println("Checked!", fileRelativePath)
 					return nil //When a file has been previously checked
 
 				}
@@ -203,7 +175,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 		return nil //catch all end
 	})
 
-	return checkedFiles
+	return walkItems, checkedFiles
 }
 
 func pathConnector(locations []string) string {
@@ -222,20 +194,11 @@ func pathConnector(locations []string) string {
 	return output
 }
 
-func copySync(folderLink *FolderLink, inverse bool, relativePath string, newTime time.Time) {
+// Copies file to destination, and updates the file's mod time to the given mod time
+func copySync(source string, destination string, newTime time.Time) {
+	//True= actually copies False = Just print the paths it was gonna use (to -> from)
 	yes := false
-	var source string
-	var destination string
 
-	if !inverse {
-		source = folderLink.FolderA + relativePath
-		destination = folderLink.FolderB + relativePath
-	} else {
-		source = folderLink.FolderB + relativePath
-		destination = folderLink.FolderA + relativePath
-	}
-	source = filepath.Clean(source)
-	destination = filepath.Clean(destination)
 	if yes {
 		copy.Copy(source, destination)
 		err := os.Chtimes(destination, newTime, newTime)
@@ -245,7 +208,78 @@ func copySync(folderLink *FolderLink, inverse bool, relativePath string, newTime
 		fmt.Println("Copy complete!")
 
 	} else {
-		fmt.Println(source, destination)
+		fmt.Println(source, "--->", destination)
+	}
+
+}
+
+func walkItemCompareCopySync(walkItem *WalkItem) {
+
+	//Splits the struct into its own variables
+	folderLink := walkItem.FolderLink
+	inverse := walkItem.Inverse
+	relativePath := walkItem.RelativePath
+
+	//Paths for file @ each location
+	var source string
+	var destination string
+
+	//Building the paths
+	if !inverse {
+		source = folderLink.FolderA + relativePath
+		destination = folderLink.FolderB + relativePath
+		if folderLink.SyncType == "specific-exts" {
+			source += "." + folderLink.SpecificExts_FolderA
+			destination += "." + folderLink.SpecificExts_FolderB
+		}
+	} else {
+		source = folderLink.FolderB + relativePath
+		destination = folderLink.FolderA + relativePath
+		if folderLink.SyncType == "specific-exts" {
+			source += "." + folderLink.SpecificExts_FolderB
+			destination += "." + folderLink.SpecificExts_FolderA
+		}
+	}
+
+	//Clean the compiled paths
+	source = filepath.Clean(source)
+	destination = filepath.Clean(destination)
+
+	//Opening the files (YOLO for the errors on source, im hoping no errors cuz it was read w/o error during its walk find)
+	sourceFile, _ := os.Open(source)
+	sourceFileStat, _ := sourceFile.Stat()
+	sourceFileModTime := sourceFileStat.ModTime()
+
+	//Opening destination AND checking for error, cuz error means file does not exist (aka something important)
+	destinationFile, destinationError := os.Open(destination)
+	fmt.Println("\n" + relativePath)
+	if destinationError == nil {
+		destinationFileStat, destinationError := destinationFile.Stat()
+
+		if destinationError == nil {
+			// No errors means we are in! We grab the mod time for the destination file and begin our work of finding the most up-to date version
+			destinationFileModTime := destinationFileStat.ModTime()
+
+			if sourceFileModTime.After(destinationFileModTime) {
+
+				fmt.Println("File is more recent in source (", source, sourceFileModTime, ")")
+				copySync(source, destination, sourceFileModTime)
+
+			} else if sourceFileModTime.Before(destinationFileModTime) {
+
+				fmt.Println("File is more recent at destination (", destination, destinationFileModTime, ")")
+				copySync(destination, source, destinationFileModTime)
+
+			} else {
+				fmt.Println("Files are in sync!")
+			}
+
+		} else {
+			fmt.Println("Error loading file at destionation ", destination)
+		}
+	} else {
+		fmt.Println("File does not exist at destination.(", destination, ") Copying and Creating!")
+		copySync(source, destination, sourceFileModTime)
 	}
 
 }
@@ -303,12 +337,19 @@ func firstBootSync() {
 
 		if folderAError == nil && folderBError == nil {
 			checkedFiles := []string{}
+			walkItems := []WalkItem{}
+			fmt.Println("Folder A: ", currentFolderLink.FolderA, "\nFolder B:", currentFolderLink.FolderB)
 
-			fmt.Println("WALKING FOLDER ", currentFolderLink.FolderA, "-> ("+currentFolderLink.FolderB+")")
-			checkedFiles = walkCheck(&currentFolderLink, false, currentFolderLink.FolderA, currentFolderLink.FolderB, checkedFiles)
+			// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderA, "-> ("+currentFolderLink.FolderB+")")
+			walkItems, checkedFiles = walkCheck(&currentFolderLink, false, currentFolderLink.FolderA, currentFolderLink.FolderB, checkedFiles, walkItems)
 
-			fmt.Println("WALKING FOLDER ", currentFolderLink.FolderB, "-> ("+currentFolderLink.FolderA+")")
-			walkCheck(&currentFolderLink, true, currentFolderLink.FolderB, currentFolderLink.FolderA, checkedFiles)
+			// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderB, "-> ("+currentFolderLink.FolderA+")")
+			walkItems, _ = walkCheck(&currentFolderLink, true, currentFolderLink.FolderB, currentFolderLink.FolderA, checkedFiles, walkItems)
+
+			// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles))
+			for _, currentWalkItem := range walkItems {
+				walkItemCompareCopySync(&currentWalkItem)
+			}
 
 			fmt.Println(" ")
 		} else {
