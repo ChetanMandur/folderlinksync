@@ -80,19 +80,17 @@ func (w *WalkItem) itemPaths() (source string, destination string) {
 
 // Outputs the current status between the two files refered to in WalkItem
 func (w *WalkItem) syncStatus() (status string, mostRecentTime time.Time) {
-	// _, _, relativePath := w.properties()
 	source, destination := w.itemPaths()
 
 	//Opening the files (YOLO for the errors on source, im hoping no errors cuz it was read w/o error during its walk find)
-	sourceFile, _ := os.Open(source)
-	sourceFileStat, _ := sourceFile.Stat()
+	// sourceFile, _ := os.Open(source)
+	sourceFileStat, sourceError := os.Stat(source)
 	sourceFileModTime := sourceFileStat.ModTime()
 
 	//Opening destination AND checking for error, cuz error means file does not exist (aka something important)
-	destinationFile, destinationError := os.Open(destination)
+	destinationFileStat, destinationError := os.Stat(destination)
 	// fmt.Println("\n" + relativePath)
-	if destinationError == nil {
-		destinationFileStat, destinationError := destinationFile.Stat()
+	if !os.IsNotExist(sourceError) && !os.IsNotExist(destinationError) {
 
 		if destinationError == nil {
 			// No errors means we are in! We grab the mod time for the destination file and begin our work of finding the most up-to date version

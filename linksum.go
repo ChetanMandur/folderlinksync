@@ -16,10 +16,10 @@ func linkSumRoutine(FolderLink *FolderLink) {
 
 	for {
 
-		_, folderAError := os.Open(FolderLink.FolderA)
-		_, folderBError := os.Open(FolderLink.FolderB)
+		_, folderAError := os.Stat(FolderLink.FolderA)
+		_, folderBError := os.Stat(FolderLink.FolderB)
 
-		if folderAError == nil && folderBError == nil {
+		if !os.IsNotExist(folderAError) && !os.IsNotExist(folderBError) {
 			checkedFiles := []string{}
 			walkItems := []WalkItem{}
 
@@ -85,10 +85,10 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string) []string {
 			fmt.Println("updated linksum", relativePath, linkSums[folderLink.UUID][relativePath])
 
 		}
+		checkedFiles = append(checkedFiles, relativePath)
 
 	}
 
-	checkedFiles = append(checkedFiles, relativePath)
 	return checkedFiles
 
 }
