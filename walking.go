@@ -11,6 +11,84 @@ import (
 	copy "github.com/otiai10/copy"
 )
 
+func pathConnector(locations []string) string {
+	output := ""
+	for i := 0; i < len(locations); i++ {
+		if i == len(locations)-1 {
+			output += locations[i]
+
+		} else {
+			output += locations[i] + "/"
+		}
+
+	}
+
+	output = filepath.ToSlash(output)
+	return output
+}
+
+// Copies file to destination, and updates the file's mod time to the given mod time
+func copySync(source string, destination string, newTime time.Time) {
+	//True= actually copies False = Just print the paths it was gonna use (to -> from)
+	yes := true
+
+	if yes {
+		copy.Copy(source, destination)
+		err := os.Chtimes(destination, newTime, newTime)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("Copy complete!")
+
+	} else {
+		fmt.Println(source, "--->", destination)
+	}
+
+}
+
+// Given a path (assumed to be within one of the folder link paths), find its relative path from root
+func relativePathFromFolderLinkRoot(folderLink *FolderLink, inverse bool, source string) string {
+	//Preping the strings
+	output := ""
+	sourceClean := filepath.ToSlash(source)
+
+	//Finding the root path
+	var sourceRoot string
+	if inverse {
+		sourceRoot = folderLink.FolderB
+
+	} else {
+		sourceRoot = folderLink.FolderA
+
+	}
+
+	//Splitting source root
+	sourceRootSplit := strings.Split(sourceRoot, "/")
+
+	//use backslash if forward slash didnt work
+	if len(sourceRootSplit) == 1 {
+		sourceRootSplit = strings.Split(sourceRoot, "\\")
+	}
+
+	//Splitting source
+	sourceCleanSplit := strings.Split(sourceClean, "/")
+	temp_slash := "/" //We want to continue using the same type of slashes for the relative path output
+
+	//use backslash if forward slash didnt work (and update temp_slash)
+	if len(sourceCleanSplit) == 1 {
+		sourceCleanSplit = strings.Split(sourceClean, "\\")
+		temp_slash = "\\"
+	}
+
+	//Chop off source root from source clean
+	sourceReduced := sourceCleanSplit[len(sourceRootSplit):]
+
+	//make it all into a string and output
+	output = temp_slash + pathConnector(sourceReduced)
+	return output
+
+}
+
 // Returns false if file does not pass file filter tests
 func fileFilterCheck(folderLink *FolderLink, sourceFileNameShort string, sourceFileNameExt string) bool {
 	if folderLink.FileExclude != nil {
@@ -178,153 +256,6 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 	return walkItems, checkedFiles
 }
 
-func pathConnector(locations []string) string {
-	output := ""
-	for i := 0; i < len(locations); i++ {
-		if i == len(locations)-1 {
-			output += locations[i]
-
-		} else {
-			output += locations[i] + "/"
-		}
-
-	}
-
-	output = filepath.ToSlash(output)
-	return output
-}
-
-// Copies file to destination, and updates the file's mod time to the given mod time
-func copySync(source string, destination string, newTime time.Time) {
-	//True= actually copies False = Just print the paths it was gonna use (to -> from)
-	yes := true
-
-	if yes {
-		copy.Copy(source, destination)
-		err := os.Chtimes(destination, newTime, newTime)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println("Copy complete!")
-
-	} else {
-		fmt.Println(source, "--->", destination)
-	}
-
-}
-
-func walkItemCompareCopySync(walkItem *WalkItem) {
-
-	//Splits the struct into its own variables
-	folderLink, inverse, relativePath := walkItem.properties()
-
-	//Paths for file @ each location
-	var source string
-	var destination string
-
-	//Building the paths
-	if !inverse {
-		source = folderLink.FolderA + relativePath
-		destination = folderLink.FolderB + relativePath
-		if folderLink.SyncType == "specific-exts" {
-			source += "." + folderLink.SpecificExts_FolderA
-			destination += "." + folderLink.SpecificExts_FolderB
-		}
-	} else {
-		source = folderLink.FolderB + relativePath
-		destination = folderLink.FolderA + relativePath
-		if folderLink.SyncType == "specific-exts" {
-			source += "." + folderLink.SpecificExts_FolderB
-			destination += "." + folderLink.SpecificExts_FolderA
-		}
-	}
-
-	//Clean the compiled paths
-	source = filepath.Clean(source)
-	destination = filepath.Clean(destination)
-
-	//Opening the files (YOLO for the errors on source, im hoping no errors cuz it was read w/o error during its walk find)
-	sourceFile, _ := os.Open(source)
-	sourceFileStat, _ := sourceFile.Stat()
-	sourceFileModTime := sourceFileStat.ModTime()
-
-	//Opening destination AND checking for error, cuz error means file does not exist (aka something important)
-	destinationFile, destinationError := os.Open(destination)
-	// fmt.Println("\n" + relativePath)
-	if destinationError == nil {
-		destinationFileStat, destinationError := destinationFile.Stat()
-
-		if destinationError == nil {
-			// No errors means we are in! We grab the mod time for the destination file and begin our work of finding the most up-to date version
-			destinationFileModTime := destinationFileStat.ModTime()
-
-			if sourceFileModTime.After(destinationFileModTime) {
-
-				fmt.Println("\nFile is more recent in source (", source, sourceFileModTime, ")")
-				copySync(source, destination, sourceFileModTime)
-
-			} else if sourceFileModTime.Before(destinationFileModTime) {
-
-				fmt.Println("\nFile is more recent at destination (", destination, destinationFileModTime, ")")
-				copySync(destination, source, destinationFileModTime)
-
-			} else {
-				// fmt.Println("Files are in sync!")
-			}
-
-		} else {
-			fmt.Println("\nError loading file at destionation ", destination)
-		}
-	} else {
-		fmt.Println("\nFile does not exist at destination.(", destination, ") Copying and Creating!")
-		copySync(source, destination, sourceFileModTime)
-	}
-
-}
-
-// Given a path (assumed to be within one of the folder link paths), find its relative path from root
-func relativePathFromFolderLinkRoot(folderLink *FolderLink, inverse bool, source string) string {
-	//Preping the strings
-	output := ""
-	sourceClean := filepath.ToSlash(source)
-
-	//Finding the root path
-	var sourceRoot string
-	if inverse {
-		sourceRoot = folderLink.FolderB
-
-	} else {
-		sourceRoot = folderLink.FolderA
-
-	}
-
-	//Splitting source root
-	sourceRootSplit := strings.Split(sourceRoot, "/")
-
-	//use backslash if forward slash didnt work
-	if len(sourceRootSplit) == 1 {
-		sourceRootSplit = strings.Split(sourceRoot, "\\")
-	}
-
-	//Splitting source
-	sourceCleanSplit := strings.Split(sourceClean, "/")
-	temp_slash := "/" //We want to continue using the same type of slashes for the relative path output
-
-	//use backslash if forward slash didnt work (and update temp_slash)
-	if len(sourceCleanSplit) == 1 {
-		sourceCleanSplit = strings.Split(sourceClean, "\\")
-		temp_slash = "\\"
-	}
-
-	//Chop off source root from source clean
-	sourceReduced := sourceCleanSplit[len(sourceRootSplit):]
-
-	//make it all into a string and output
-	output = temp_slash + pathConnector(sourceReduced)
-	return output
-
-}
-
 func firstBootSync() {
 	fmt.Println("---FIRST BOOT SYNC---")
 	for _, currentFolderLink := range folderLinks.FolderLinks {
@@ -346,7 +277,7 @@ func firstBootSync() {
 
 			// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles))
 			for _, currentWalkItem := range walkItems {
-				walkItemCompareCopySync(&currentWalkItem)
+				currentWalkItem.quickSync()
 			}
 
 			fmt.Println(" ")
