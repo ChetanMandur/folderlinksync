@@ -14,6 +14,8 @@ func linkSumRoutine(FolderLink *FolderLink) {
 	fmt.Println("\n=======", FolderLink.Name, "|", FolderLink.UUID, "=======")
 	fmt.Println("Folder A: ", FolderLink.FolderA, "\nFolder B:", FolderLink.FolderB)
 
+	var folderHistory []string
+
 	for {
 
 		_, folderAError := os.Stat(FolderLink.FolderA)
@@ -29,21 +31,17 @@ func linkSumRoutine(FolderLink *FolderLink) {
 
 			checkedFiles = []string{}
 			for _, currentWalkItem := range walkItems {
-				checkedFiles = walkItemLinkSumCheck(&currentWalkItem, checkedFiles)
+				checkedFiles = walkItemLinkSumCheck(&currentWalkItem, checkedFiles, &folderHistory)
 			}
 
-			for key, _ := range linkSums[FolderLink.UUID] {
-				if !slices.Contains(checkedFiles, key) {
-					fmt.Println("I THINK THIS FILE DOESNT EXIST ANYMORE", checkedFiles, key)
-				}
-			}
-			// fmt.Println(" ")
+			folderHistory = checkedFiles
+
 		} else {
-			if folderAError != nil {
-				fmt.Println("Error loading links A:", folderAError)
+			if os.IsNotExist(folderAError) {
+				fmt.Println("Folder A does not exist:", folderAError)
 			}
-			if folderBError != nil {
-				fmt.Println("Error loading links B:", folderBError)
+			if os.IsNotExist(folderBError) {
+				fmt.Println("Folder B does not exist", folderBError)
 			}
 
 		}
@@ -51,7 +49,15 @@ func linkSumRoutine(FolderLink *FolderLink) {
 
 }
 
-func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string) []string {
+func walkItemFileRemover(walkItem *WalkItem) {
+	source, destination := walkItem.itemPaths()
+
+	os.Remove(source)
+	os.Remove(destination)
+
+}
+
+func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string, folderHistory *[]string) []string {
 	folderLink, _, relativePath := walkItem.properties()
 
 	if linkSums[folderLink.UUID] == nil {
@@ -60,13 +66,43 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string) []string {
 	}
 
 	status, time := walkItem.syncStatus()
-	// fmt.Println(status)
+
+	errorCheck := false
+	if len(status) > 6 {
+		errorCheck = status[0:7] == "ERROR::"
+	}
+
+	if status == "DESTINATION!=EXIST" {
+		// fmt.Println("DESTINATION!=EXIST")
+		if slices.Contains(*folderHistory, relativePath) {
+			fmt.Println(relativePath, "I think this file was deleted at destination")
+			walkItemFileRemover(walkItem)
+			errorCheck = true
+		} else {
+			fmt.Println(relativePath, "New file that is not yet at destination")
+		}
+
+	}
+
+	if status == "SOURCE!=EXIST" {
+		// fmt.Println("SOURCE!=EXIST")
+		if slices.Contains(*folderHistory, relativePath) {
+			fmt.Println(relativePath, "I think this file was deleted at source")
+			walkItemFileRemover(walkItem)
+
+			errorCheck = true
+
+		} else {
+			fmt.Println(relativePath, "New file that is not yet at source")
+		}
+	}
 
 	// fmt.Println("\n", relativePath)
-	if status != "ERROR" {
+	if !errorCheck {
 
 		//For when the files are not in sync, keep trying to copy until it reports synced
 		for status != "INSYNC" {
+			// fmt.Println("NOT INSYNC", status)
 			walkItem.quickSync()
 			status, time = walkItem.syncStatus()
 		}
@@ -75,20 +111,21 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string) []string {
 		if linkSums[folderLink.UUID][relativePath].IsZero() {
 			// fmt.Println("linksum reporting zero")
 			linkSums[folderLink.UUID][relativePath] = time
-			fmt.Println("added to linksum", relativePath, linkSums[folderLink.UUID][relativePath])
+			fmt.Println("added to linksum", relativePath, linkSums[folderLink.UUID][relativePath], "\n")
 
 		}
 
 		if linkSums[folderLink.UUID][relativePath] != time {
 			// fmt.Println("linksum time not the same")
 			linkSums[folderLink.UUID][relativePath] = time
-			fmt.Println("updated linksum", relativePath, linkSums[folderLink.UUID][relativePath])
+			fmt.Println("updated linksum", relativePath, linkSums[folderLink.UUID][relativePath], "\n")
 
 		}
-		checkedFiles = append(checkedFiles, relativePath)
 
+	} else {
+		fmt.Println("Error hit!", status, "\n")
 	}
 
-	return checkedFiles
+	return append(checkedFiles, relativePath)
 
 }

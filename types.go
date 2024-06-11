@@ -85,40 +85,67 @@ func (w *WalkItem) syncStatus() (status string, mostRecentTime time.Time) {
 	//Opening the files (YOLO for the errors on source, im hoping no errors cuz it was read w/o error during its walk find)
 	// sourceFile, _ := os.Open(source)
 	sourceFileStat, sourceError := os.Stat(source)
-	sourceFileModTime := sourceFileStat.ModTime()
+	var sourceFileModTime time.Time
 
 	//Opening destination AND checking for error, cuz error means file does not exist (aka something important)
 	destinationFileStat, destinationError := os.Stat(destination)
-	// fmt.Println("\n" + relativePath)
-	if !os.IsNotExist(sourceError) && !os.IsNotExist(destinationError) {
+	var destinationFileModTime time.Time
 
-		if destinationError == nil {
-			// No errors means we are in! We grab the mod time for the destination file and begin our work of finding the most up-to date version
-			destinationFileModTime := destinationFileStat.ModTime()
+	sourceExists := !os.IsNotExist(sourceError)
+	destinationExists := !os.IsNotExist(destinationError)
 
-			if sourceFileModTime.After(destinationFileModTime) {
+	if sourceExists {
+		sourceFileModTime = sourceFileStat.ModTime()
 
-				// fmt.Println("File is more recent in source (", source, sourceFileModTime, ")")
-				return "SOURCE=RECENT", sourceFileModTime
+	}
+	if destinationExists {
+		destinationFileModTime = destinationFileStat.ModTime()
 
-			} else if sourceFileModTime.Before(destinationFileModTime) {
+	}
 
-				// fmt.Println("File is more recent at destination (", destination, destinationFileModTime, ")")
-				return "DESTINATION=RECENT", destinationFileModTime
+	if sourceExists && sourceError != nil {
+		return "ERROR::SOURCE_ERRORexists:SOURCE_FILEexists", sourceFileModTime
+	}
 
-			} else {
-				// fmt.Println("Files are in sync!")
-				return "INSYNC", sourceFileModTime
-			}
+	if destinationExists && destinationError != nil {
+		return "ERROR::DESTINATION_ERRORexists:DESTINATION_FILEexists", destinationFileModTime
+	}
 
-		} else {
-			// fmt.Println("Error loading file at destionation ", destination)
-			return "ERROR", time.Time{}
-		}
-	} else {
-		// fmt.Println("File does not exist at destination.(", destination, ") Copying and Creating!")
+	if sourceExists && !destinationExists {
 		return "DESTINATION!=EXIST", sourceFileModTime
 	}
+
+	if !sourceExists && destinationExists {
+		return "SOURCE!=EXIST", destinationFileModTime
+
+	}
+
+	if !sourceExists && !destinationExists {
+		return "ERROR::SOURCE_FILEdoesnt_exist:DESTINATION_FILEdoesnt_exist", time.Time{}
+	}
+
+	if sourceExists && destinationExists {
+
+		// No errors means we are in! We grab the mod time for the destination file and begin our work of finding the most up-to date version
+
+		if sourceFileModTime.After(destinationFileModTime) {
+
+			// fmt.Println("File is more recent in source (", source, sourceFileModTime, ")")
+			return "SOURCE=RECENT", sourceFileModTime
+
+		} else if sourceFileModTime.Before(destinationFileModTime) {
+
+			// fmt.Println("File is more recent at destination (", destination, destinationFileModTime, ")")
+			return "DESTINATION=RECENT", destinationFileModTime
+
+		} else {
+			// fmt.Println("Files are in sync!")
+			return "INSYNC", sourceFileModTime
+		}
+
+	}
+
+	return "ERROR::END_OF_CASES", time.Time{}
 
 }
 
@@ -126,11 +153,14 @@ func (w *WalkItem) syncStatus() (status string, mostRecentTime time.Time) {
 func (w *WalkItem) quickSync() {
 	source, destination := w.itemPaths()
 	status, time := w.syncStatus()
+
 	switch status {
 	case "SOURCE=RECENT", "DESTINATION!=EXIST":
 		copySync(source, destination, time)
-	case "DESTINATION=RECENT":
+	case "DESTINATION=RECENT", "SOURCE!=EXIST":
 		copySync(destination, source, time)
+	default:
+		// fmt.Println("quick sync default", status, time)
 
 	}
 

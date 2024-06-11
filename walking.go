@@ -38,7 +38,7 @@ func copySync(source string, destination string, newTime time.Time) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println("Copy complete!")
+		fmt.Println("Copy complete!", source, "--->", destination)
 
 	} else {
 		fmt.Println(source, "--->", destination)
@@ -248,7 +248,11 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 			}
 
 		} else {
-			fmt.Println("Error loading", source)
+			// fileRelativePath := relativePathFromFolderLinkRoot(folderLink, inverse, path)
+			// checkedFiles = append(checkedFiles, fileRelativePath)
+			// 	walkItems = append(walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: relativePathFromFolderLinkRoot(folderLink, inverse, path)})
+			fmt.Println("Error loading", path, inverse)
+
 		}
 		return nil //catch all end
 	})
