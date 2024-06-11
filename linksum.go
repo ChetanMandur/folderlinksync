@@ -72,12 +72,14 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string, folderHisto
 		errorCheck = status[0:7] == "ERROR::"
 	}
 
+	fileDeleted := false
+
 	if status == "DESTINATION!=EXIST" {
 		// fmt.Println("DESTINATION!=EXIST")
 		if slices.Contains(*folderHistory, relativePath) {
 			fmt.Println(relativePath, "I think this file was deleted at destination")
 			walkItemFileRemover(walkItem)
-			errorCheck = true
+			fileDeleted = true
 		} else {
 			fmt.Println(relativePath, "New file that is not yet at destination")
 		}
@@ -90,7 +92,7 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string, folderHisto
 			fmt.Println(relativePath, "I think this file was deleted at source")
 			walkItemFileRemover(walkItem)
 
-			errorCheck = true
+			fileDeleted = true
 
 		} else {
 			fmt.Println(relativePath, "New file that is not yet at source")
@@ -98,7 +100,7 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string, folderHisto
 	}
 
 	// fmt.Println("\n", relativePath)
-	if !errorCheck {
+	if !errorCheck && !fileDeleted {
 
 		//For when the files are not in sync, keep trying to copy until it reports synced
 		for status != "INSYNC" {
@@ -122,7 +124,7 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string, folderHisto
 
 		}
 
-	} else {
+	} else if errorCheck {
 		fmt.Println("Error hit!", status, "\n")
 	}
 

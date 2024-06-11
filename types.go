@@ -82,12 +82,9 @@ func (w *WalkItem) itemPaths() (source string, destination string) {
 func (w *WalkItem) syncStatus() (status string, mostRecentTime time.Time) {
 	source, destination := w.itemPaths()
 
-	//Opening the files (YOLO for the errors on source, im hoping no errors cuz it was read w/o error during its walk find)
-	// sourceFile, _ := os.Open(source)
 	sourceFileStat, sourceError := os.Stat(source)
 	var sourceFileModTime time.Time
 
-	//Opening destination AND checking for error, cuz error means file does not exist (aka something important)
 	destinationFileStat, destinationError := os.Stat(destination)
 	var destinationFileModTime time.Time
 
