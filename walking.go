@@ -133,7 +133,7 @@ func folderFilterCheck(folderLink *FolderLink, sourceFileName string) bool {
 	return true
 }
 
-func walkCheck(folderLink *FolderLink, inverse bool, source string, destination string, checkedFiles []string, walkItems []WalkItem) ([]WalkItem, []string) {
+func walkCheck(folderLink *FolderLink, inverse bool, source string, destination string, checkedFiles *[]string, walkItems *[]WalkItem) {
 
 	filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
 		if err == nil { //make sure there is no error from the walk
@@ -163,7 +163,7 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 
 				if folderLink.FolderRecursion {
 
-					walkItems, checkedFiles = walkCheck(folderLink, inverse, sourceFilePath, destinationFilePath, checkedFiles, walkItems)
+					walkCheck(folderLink, inverse, sourceFilePath, destinationFilePath, checkedFiles, walkItems)
 				}
 				return filepath.SkipDir
 
@@ -235,11 +235,11 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 				}
 
 				//// Ignore files that we have already checked (saves some compute time and helpful when walking on both A and B)
-				if !(slices.Contains(checkedFiles, fileRelativePath)) {
+				if !(slices.Contains(*checkedFiles, fileRelativePath)) {
 
 					// fmt.Println("Opened!", fileRelativePath)
-					walkItems = append(walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: fileRelativePath})
-					checkedFiles = append(checkedFiles, fileRelativePath)
+					*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: fileRelativePath})
+					*checkedFiles = append(*checkedFiles, fileRelativePath)
 				} else {
 					// fmt.Println("Checked!", fileRelativePath)
 					return nil //When a file has been previously checked
@@ -256,8 +256,6 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 		}
 		return nil //catch all end
 	})
-
-	return walkItems, checkedFiles
 }
 
 func firstBootSync() {
@@ -274,10 +272,10 @@ func firstBootSync() {
 			fmt.Println("Folder A: ", currentFolderLink.FolderA, "\nFolder B:", currentFolderLink.FolderB)
 
 			// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderA, "-> ("+currentFolderLink.FolderB+")")
-			walkItems, checkedFiles = walkCheck(&currentFolderLink, false, currentFolderLink.FolderA, currentFolderLink.FolderB, checkedFiles, walkItems)
+			walkCheck(&currentFolderLink, false, currentFolderLink.FolderA, currentFolderLink.FolderB, &checkedFiles, &walkItems)
 
 			// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderB, "-> ("+currentFolderLink.FolderA+")")
-			walkItems, _ = walkCheck(&currentFolderLink, true, currentFolderLink.FolderB, currentFolderLink.FolderA, checkedFiles, walkItems)
+			walkCheck(&currentFolderLink, true, currentFolderLink.FolderB, currentFolderLink.FolderA, &checkedFiles, &walkItems)
 
 			// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles))
 			for _, currentWalkItem := range walkItems {

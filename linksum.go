@@ -25,15 +25,13 @@ func linkSumRoutine(FolderLink *FolderLink) {
 			checkedFiles := []string{}
 			walkItems := []WalkItem{}
 
-			walkItems, checkedFiles = walkCheck(FolderLink, false, FolderLink.FolderA, FolderLink.FolderB, checkedFiles, walkItems)
+			walkCheck(FolderLink, false, FolderLink.FolderA, FolderLink.FolderB, &checkedFiles, &walkItems)
 
-			walkItems, _ = walkCheck(FolderLink, true, FolderLink.FolderB, FolderLink.FolderA, checkedFiles, walkItems)
+			walkCheck(FolderLink, true, FolderLink.FolderB, FolderLink.FolderA, &checkedFiles, &walkItems)
 
-			checkedFiles = []string{}
 			for _, currentWalkItem := range walkItems {
-				checkedFiles = walkItemLinkSumCheck(&currentWalkItem, checkedFiles, &folderHistory)
+				walkItemLinkSumCheck(&currentWalkItem, &folderHistory)
 			}
-
 			folderHistory = checkedFiles
 
 		} else {
@@ -57,7 +55,7 @@ func walkItemFileRemover(walkItem *WalkItem) {
 
 }
 
-func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string, folderHistory *[]string) []string {
+func walkItemLinkSumCheck(walkItem *WalkItem, folderHistory *[]string) {
 	folderLink, _, relativePath := walkItem.properties()
 
 	if linkSums[folderLink.UUID] == nil {
@@ -77,7 +75,7 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string, folderHisto
 	if status == "DESTINATION!=EXIST" {
 		// fmt.Println("DESTINATION!=EXIST")
 		if slices.Contains(*folderHistory, relativePath) {
-			fmt.Println(relativePath, "I think this file was deleted at destination")
+			fmt.Println(relativePath, "I think this file was deleted at destination", "\n")
 			walkItemFileRemover(walkItem)
 			fileDeleted = true
 		} else {
@@ -89,7 +87,7 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string, folderHisto
 	if status == "SOURCE!=EXIST" {
 		// fmt.Println("SOURCE!=EXIST")
 		if slices.Contains(*folderHistory, relativePath) {
-			fmt.Println(relativePath, "I think this file was deleted at source")
+			fmt.Println(relativePath, "I think this file was deleted at source", "\n")
 			walkItemFileRemover(walkItem)
 
 			fileDeleted = true
@@ -127,7 +125,5 @@ func walkItemLinkSumCheck(walkItem *WalkItem, checkedFiles []string, folderHisto
 	} else if errorCheck {
 		fmt.Println("Error hit!", status, "\n")
 	}
-
-	return append(checkedFiles, relativePath)
 
 }
