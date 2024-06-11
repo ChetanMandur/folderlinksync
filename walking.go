@@ -47,6 +47,9 @@ func copySync(source string, destination string, newTime time.Time) {
 }
 
 // Given a path (assumed to be within one of the folder link paths), find its relative path from root
+// Relative path is the path of the file without directory info beyond root,
+// For example, given the folder root (either FolderA or FolderB) and the path of a file within its directory, return relative path
+// FolderRoot = C:/FolderRoot/, FilePath = C:/FolderRoot/depth/test.txt, therefore RelativePath= /depth/test.txt
 func relativePathFromFolderLinkRoot(folderLink *FolderLink, inverse bool, source string) string {
 	//Preping the strings
 	output := ""
@@ -133,6 +136,11 @@ func folderFilterCheck(folderLink *FolderLink, sourceFileName string) bool {
 	return true
 }
 
+/*
+The goal of this function is to walk through a directory, and return a list of files found in the directory.
+The function takes in account acceptions/exclusions listed in the related FolderLink.
+The list is of type WalkItem, which consists of a file's relative path, related FolderLink, whether it is 'inverse' or not (aka whether it is folder B or A in the Link)
+*/
 func walkCheck(folderLink *FolderLink, inverse bool, source string, destination string, checkedFiles *[]string, walkItems *[]WalkItem) {
 
 	filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
@@ -141,8 +149,16 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 			//// Grabbing file props as variables
 			sourceFileName := f.Name()
 			sourceFileIsDir := f.IsDir()
-			// sourceFileModTime := f.ModTime()
 			sourceFilePath := path //just to make naming the same
+
+			/*
+				I NEED TO GO BACK ON THIS AT SOME POINT, FILES AND FOLDERS CAN HAVE MULTIPLE '.' IN THEIR NAME
+				Goal is to
+				1) split the name by '.' | "file.name.with.periods.txt" --> ["file", "name", "with", "periods", "txt"] (len=5)
+				2) Group array by parts | index 0 -> len-2 (inclusive) = name = ["file", "name", "with", "periods"] , index len-1 = [txt]
+				3) Quick add all elements in the 'name' part | ["file", "name", "with", "periods"] -->
+				4) replace sourceFileNameShort and sourceFileNameExt with new values
+			*/
 
 			sourceFileNameSplit := strings.Split(sourceFileName, ".")
 			var sourceFileNameShort string
@@ -152,7 +168,9 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 				sourceFileNameExt = sourceFileNameSplit[1]
 			}
 
-			//// Building the equivalent path at destination
+			fmt.Println("WALKING Source:", source, "Path:", path, "F.Name()", sourceFileName)
+
+			//// Building the equivalent path at destination: "destination-path\source-file-name"
 			destinationFilePath := pathConnector([]string{destination, sourceFileName})
 
 			//// When file is a directory, and not the root folder
@@ -178,23 +196,19 @@ func walkCheck(folderLink *FolderLink, inverse bool, source string, destination 
 					return nil
 				}
 
-				//// Relative path is the path of the file without directory info beyond root,
-				//// For example, the files C://folderA/folder1/test.txt and C://folderB/folder1/test.txt have the relative path of /folder1/test.txt
-				//// This is useful to make note of each file, including their position in deep root
-				//// In our case, we take the file @ source and file @ destionation (always assume there is one, as thats the goal) and generate the relative path
 				var fileRelativePath string
 
-				//// For a convert sync type, we need an extension-less 'currentRelativePath' and specific extensions for 'currentFilePath' and 'destinationFilePath'
+				//// For a convert sync type, we need an extension-less 'fileRelativePath'
 				if folderLink.SyncType == "specific-exts" {
 					//// Grabbing folder props for Specific Exts as variables
 					var SpecificExts_SourceFolderExt string
-					// var SpecificExts_DestinationFolderExt string
+
 					if inverse {
 						SpecificExts_SourceFolderExt = folderLink.SpecificExts_FolderB
-						// SpecificExts_DestinationFolderExt = folderLink.SpecificExts_FolderA
+
 					} else {
 						SpecificExts_SourceFolderExt = folderLink.SpecificExts_FolderA
-						// SpecificExts_DestinationFolderExt = folderLink.SpecificExts_FolderB
+
 					}
 
 					//// Check if extensions are case sensitive or not

@@ -22,12 +22,12 @@ func main() {
 	// ON LAUNCH
 	launchSequence()
 
-	for _, currentFolderLink := range folderLinks.FolderLinks {
-		wg.Add(1)
-		go linkSumRoutine(&currentFolderLink)
-	}
+	// for _, currentFolderLink := range folderLinks.FolderLinks {
+	// 	wg.Add(1)
+	// 	go linkSumRoutine(&currentFolderLink)
+	// }
 
-	wg.Wait()
+	// wg.Wait()
 
 }
 
