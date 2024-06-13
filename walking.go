@@ -50,50 +50,51 @@ func copySync(source string, destination string, newTime time.Time) {
 // Relative path is the path of the file without directory info beyond root,
 // For example, given the folder root (either FolderA or FolderB) and the path of a file within its directory, return relative path
 // FolderRoot = C:/FolderRoot/, FilePath = C:/FolderRoot/depth/test.txt, therefore RelativePath= /depth/test.txt
-func relativePathFromFolderLinkRoot(folderLink *FolderLink, inverse bool, source string) string {
+// root is the path of the root folder, file is the path of the file in question (with file assumed to be within root)
+func relativePathFromRoot(root string, file string, extensionless bool) string {
 	//Preping the strings
 	output := ""
-	sourceClean := filepath.ToSlash(source)
+	file = filepath.ToSlash(file) //cleans the string
 
-	//Finding the root path
-	var sourceRoot string
-	if inverse {
-		sourceRoot = folderLink.FolderB
-
-	} else {
-		sourceRoot = folderLink.FolderA
-
-	}
-
-	//Splitting source root
-	sourceRootSplit := strings.Split(sourceRoot, "/")
+	//Splitting  root
+	rootSplit := strings.Split(root, "/")
 
 	//use backslash if forward slash didnt work
-	if len(sourceRootSplit) == 1 {
-		sourceRootSplit = strings.Split(sourceRoot, "\\")
+	if len(rootSplit) == 1 {
+		rootSplit = strings.Split(root, "\\")
 	}
 
-	//Splitting source
-	sourceCleanSplit := strings.Split(sourceClean, "/")
+	//Splitting file path
+	fileSplit := strings.Split(file, "/")
 	temp_slash := "/" //We want to continue using the same type of slashes for the relative path output
 
 	//use backslash if forward slash didnt work (and update temp_slash)
-	if len(sourceCleanSplit) == 1 {
-		sourceCleanSplit = strings.Split(sourceClean, "\\")
+	if len(fileSplit) == 1 {
+		fileSplit = strings.Split(file, "\\")
 		temp_slash = "\\"
 	}
 
-	//Chop off source root from source clean
-	sourceReduced := sourceCleanSplit[len(sourceRootSplit):]
+	//Chop off root from the source
+	fileReduced := fileSplit[len(rootSplit):]
+
+	//Chopping off the extension if we extensionless
+	if extensionless {
+		// //               split by '.'  (the last element in path (ie. file))
+		// fileNameSplit := strings.Split(fileReduced[len(fileReduced)-1], ".")
+		// fileReduced[len(fileReduced)-1] = fileNameSplit[0] // 0 = file name, 1= ext
+		name, _ := FileNameSplitter(fileReduced[len(fileReduced)-1])
+		fileReduced[len(fileReduced)-1] = name
+	}
 
 	//make it all into a string and output
-	output = temp_slash + pathConnector(sourceReduced)
+	output = temp_slash + pathConnector(fileReduced)
+
 	return output
 
 }
 
 // Returns false if file does not pass file filter tests
-func fileFilterCheck(folderLink *FolderLink, sourceFileNameShort string, sourceFileNameExt string) bool {
+func fileFilterCheck(folderLink *FolderLink, inverse bool, sourceFileNameShort string, sourceFileNameExt string) bool {
 	if folderLink.FileExclude != nil {
 		if slices.Contains(folderLink.FileExclude, sourceFileNameShort) {
 			return false
@@ -117,6 +118,33 @@ func fileFilterCheck(folderLink *FolderLink, sourceFileNameShort string, sourceF
 		}
 
 	}
+
+	if folderLink.SyncType == "specific-exts" {
+		//// Grabbing folder props for Specific Exts as variables
+		var sourceFolderExt string
+
+		if inverse {
+			sourceFolderExt = folderLink.SpecificExts_FolderB
+
+		} else {
+			sourceFolderExt = folderLink.SpecificExts_FolderA
+
+		}
+
+		//// Check if extensions are case sensitive or not
+		var extensionMatch = false
+		if folderLink.SpecificExts_CaseSensitive {
+			extensionMatch = (sourceFolderExt == sourceFileNameExt)
+
+		} else {
+			extensionMatch = (strings.EqualFold(sourceFolderExt, sourceFileNameExt))
+		}
+
+		if !extensionMatch {
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -136,140 +164,82 @@ func folderFilterCheck(folderLink *FolderLink, sourceFileName string) bool {
 	return true
 }
 
+func FileNameSplitter(originalName string) (finalName string, finalExt string) {
+	originalNameSplit := strings.Split(originalName, ".")
+
+	finalExt = originalNameSplit[len(originalNameSplit)-1]
+
+	finalNameSplit := originalNameSplit[0 : len(originalNameSplit)-1]
+
+	for index, value := range finalNameSplit {
+		if index != 0 {
+			finalName = finalName + "."
+		}
+		finalName = finalName + value
+	}
+
+	return finalName, finalExt
+
+}
+
 /*
 The goal of this function is to walk through a directory, and return a list of files found in the directory.
 The function takes in account acceptions/exclusions listed in the related FolderLink.
 The list is of type WalkItem, which consists of a file's relative path, related FolderLink, whether it is 'inverse' or not (aka whether it is folder B or A in the Link)
 */
-func walkCheck(folderLink *FolderLink, inverse bool, source string, destination string, checkedFiles *[]string, walkItems *[]WalkItem) {
+func WalkCheck(folderLink *FolderLink, inverse bool, checkedFiles *[]string, walkItems *[]WalkItem) {
+	var source string
+	// var destination string
 
-	filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
-		if err == nil { //make sure there is no error from the walk
+	if !inverse {
+		source = folderLink.FolderA
+	} else {
+		source = folderLink.FolderB
+	}
 
-			//// Grabbing file props as variables
-			sourceFileName := f.Name()
-			sourceFileIsDir := f.IsDir()
-			sourceFilePath := path //just to make naming the same
+	filepath.Walk(source, func(filePath string, file os.FileInfo, err error) error {
 
-			/*
-				I NEED TO GO BACK ON THIS AT SOME POINT, FILES AND FOLDERS CAN HAVE MULTIPLE '.' IN THEIR NAME
-				Goal is to
-				1) split the name by '.' | "file.name.with.periods.txt" --> ["file", "name", "with", "periods", "txt"] (len=5)
-				2) Group array by parts | index 0 -> len-2 (inclusive) = name = ["file", "name", "with", "periods"] , index len-1 = [txt]
-				3) Quick add all elements in the 'name' part | ["file", "name", "with", "periods"] -->
-				4) replace sourceFileNameShort and sourceFileNameExt with new values
-			*/
+		fileName := file.Name()
+		fileIsDir := file.IsDir()
 
-			sourceFileNameSplit := strings.Split(sourceFileName, ".")
-			var sourceFileNameShort string
-			var sourceFileNameExt string
-			if len(sourceFileNameSplit) == 2 && !sourceFileIsDir {
-				sourceFileNameShort = sourceFileNameSplit[0]
-				sourceFileNameExt = sourceFileNameSplit[1]
-			}
+		if fileIsDir {
+			fileIsRoot := (filepath.Base(filePath) == filepath.Base(source))
 
-			fmt.Println("WALKING Source:", source, "Path:", path, "F.Name()", sourceFileName)
-
-			//// Building the equivalent path at destination: "destination-path\source-file-name"
-			destinationFilePath := pathConnector([]string{destination, sourceFileName})
-
-			//// When file is a directory, and not the root folder
-			if sourceFileIsDir && (filepath.Base(sourceFilePath) != filepath.Base(source)) {
-				if !(folderFilterCheck(folderLink, sourceFileName)) {
+			if !fileIsRoot {
+				if (!folderFilterCheck(folderLink, fileName)) || (!folderLink.FolderRecursion) {
 					return filepath.SkipDir
-				}
-
-				if folderLink.FolderRecursion {
-
-					walkCheck(folderLink, inverse, sourceFilePath, destinationFilePath, checkedFiles, walkItems)
-				}
-				return filepath.SkipDir
-
-				//// When file is root (always the inital file read)
-			} else if sourceFileIsDir && (filepath.Base(sourceFilePath) == filepath.Base(source)) {
-
-				return nil
-
-				//// When file is not a directory
-			} else {
-				if !(fileFilterCheck(folderLink, sourceFileNameShort, sourceFileNameExt)) {
-					return nil
-				}
-
-				var fileRelativePath string
-
-				//// For a convert sync type, we need an extension-less 'fileRelativePath'
-				if folderLink.SyncType == "specific-exts" {
-					//// Grabbing folder props for Specific Exts as variables
-					var SpecificExts_SourceFolderExt string
-
-					if inverse {
-						SpecificExts_SourceFolderExt = folderLink.SpecificExts_FolderB
-
-					} else {
-						SpecificExts_SourceFolderExt = folderLink.SpecificExts_FolderA
-
-					}
-
-					//// Check if extensions are case sensitive or not
-					var extensionMatch = false
-					if folderLink.SpecificExts_CaseSensitive {
-						extensionMatch = (SpecificExts_SourceFolderExt == sourceFileNameExt)
-
-					} else {
-						extensionMatch = (strings.EqualFold(SpecificExts_SourceFolderExt, sourceFileNameExt))
-					}
-
-					//// If file matches extension conditions, begin generating new 'currentRelativePath', 'sourceFilePath', and 'destinationFilePath'
-					if extensionMatch {
-						//Creating extensionless sourceFile and destinationFile paths (leads to extensionless currentRelativePath)
-						sourceFilePath = pathConnector([]string{source, sourceFileNameShort})
-						// destinationFilePath = pathConnector([]string{destination, sourceFileNameShort})
-
-						fileRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
-
-						//Updating sourceFile and destinationFilePath with specific file extension
-						// sourceFilePath = sourceFilePath + "." + SpecificExts_SourceFolderExt
-						// destinationFilePath = destinationFilePath + "." + SpecificExts_DestinationFolderExt
-
-						//If they don't match, ignore file
-					} else {
-						return nil
-					}
-
-					//For a normal sync, the file is 1:1, with the only difference being the root folder
-				} else if folderLink.SyncType == "normal" {
-
-					fileRelativePath = relativePathFromFolderLinkRoot(folderLink, inverse, sourceFilePath)
-
-				} else {
-
-					return nil
-
-				}
-
-				//// Ignore files that we have already checked (saves some compute time and helpful when walking on both A and B)
-				if !(slices.Contains(*checkedFiles, fileRelativePath)) {
-
-					// fmt.Println("Opened!", fileRelativePath)
-					*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: fileRelativePath})
-					*checkedFiles = append(*checkedFiles, fileRelativePath)
-				} else {
-					// fmt.Println("Checked!", fileRelativePath)
-					return nil //When a file has been previously checked
-
 				}
 			}
 
 		} else {
-			// fileRelativePath := relativePathFromFolderLinkRoot(folderLink, inverse, path)
-			// checkedFiles = append(checkedFiles, fileRelativePath)
-			// 	walkItems = append(walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: relativePathFromFolderLinkRoot(folderLink, inverse, path)})
-			fmt.Println("Error loading", path, inverse)
+			fileNameShort, fileNameExt := FileNameSplitter(fileName)
+
+			if !fileFilterCheck(folderLink, inverse, fileNameShort, fileNameExt) {
+				return nil
+			}
+
+			extensionlessRelativePath := false
+			if folderLink.SyncType != "normal" {
+				extensionlessRelativePath = true
+			}
+
+			relativePath := relativePathFromRoot(source, filePath, extensionlessRelativePath)
+
+			if !slices.Contains(*checkedFiles, relativePath) {
+				*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: relativePath})
+				*checkedFiles = append(*checkedFiles, relativePath)
+				// fmt.Println("Added", relativePath)
+
+			} /* else {
+				fmt.Println("Already checked!", relativePath)
+			} */
 
 		}
-		return nil //catch all end
+
+		return nil
+
 	})
+
 }
 
 func firstBootSync() {
@@ -286,10 +256,10 @@ func firstBootSync() {
 			fmt.Println("Folder A: ", currentFolderLink.FolderA, "\nFolder B:", currentFolderLink.FolderB)
 
 			// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderA, "-> ("+currentFolderLink.FolderB+")")
-			walkCheck(&currentFolderLink, false, currentFolderLink.FolderA, currentFolderLink.FolderB, &checkedFiles, &walkItems)
+			WalkCheck(&currentFolderLink, false, &checkedFiles, &walkItems)
 
 			// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderB, "-> ("+currentFolderLink.FolderA+")")
-			walkCheck(&currentFolderLink, true, currentFolderLink.FolderB, currentFolderLink.FolderA, &checkedFiles, &walkItems)
+			WalkCheck(&currentFolderLink, true, &checkedFiles, &walkItems)
 
 			// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles))
 			for _, currentWalkItem := range walkItems {

@@ -25,9 +25,9 @@ func linkSumRoutine(FolderLink *FolderLink) {
 			checkedFiles := []string{}
 			walkItems := []WalkItem{}
 
-			walkCheck(FolderLink, false, FolderLink.FolderA, FolderLink.FolderB, &checkedFiles, &walkItems)
+			WalkCheck(FolderLink, false, &checkedFiles, &walkItems)
 
-			walkCheck(FolderLink, true, FolderLink.FolderB, FolderLink.FolderA, &checkedFiles, &walkItems)
+			WalkCheck(FolderLink, true, &checkedFiles, &walkItems)
 
 			for _, currentWalkItem := range walkItems {
 				walkItemLinkSumCheck(&currentWalkItem, &folderHistory)
