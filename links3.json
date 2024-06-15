@@ -6,6 +6,8 @@
       "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\gbaSAVES",
       "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\gbaSAVES",
       "folderRecursion":true,
+      "syncOnStartup":true,
+      "continuousSync":true,
       "syncType":"specific-exts",
       "specificExts_FolderA": "SRM",
       "specificExts_FolderB": "sav",
@@ -17,6 +19,8 @@
       "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\pspSAVES",
       "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\pspSAVES",
       "folderRecursion":true,
+      "syncOnStartup":true,
+      "continuousSync":true,
       "syncType":"normal", 
       "FolderExclude": ["ARK_01234"]
 
@@ -27,6 +31,8 @@
       "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\snesSAVES",
       "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\snesSAVES",
       "folderRecursion":false,
+      "syncOnStartup":true,
+      "continuousSync":true,
       "syncType":"specific-exts",
       "specificExts_FolderA": "srm",
       "specificExts_FolderB": "srm",

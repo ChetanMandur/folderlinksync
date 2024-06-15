@@ -19,12 +19,13 @@ var linkSums = make(map[int]map[string]time.Time)
 var wg sync.WaitGroup
 
 func main() {
-	// ON LAUNCH
 	launchSequence()
 
 	for _, currentFolderLink := range folderLinks.FolderLinks {
-		wg.Add(1)
-		go linkSumRoutine(&currentFolderLink)
+		if currentFolderLink.ContinuousSync {
+			wg.Add(1)
+			go linkSumRoutine(&currentFolderLink)
+		}
 	}
 	wg.Wait()
 
@@ -60,17 +61,50 @@ func launchSequence() {
 		current.FolderB, _ = filepath.Abs(current.FolderB) // I realized the worst
 		fmt.Println("--Folder A: " + current.FolderA)
 		fmt.Println("--Folder B: " + current.FolderB)
-		fmt.Println(current.status, current.FolderRecursion, current.SyncType, current.SpecificExts_FolderA, current.SpecificExts_FolderB, current.SpecificExts_CaseSensitive)
+		fmt.Println(current.FolderRecursion, current.SyncType, current.SpecificExts_FolderA, current.SpecificExts_FolderB, current.SpecificExts_CaseSensitive)
 	}
 
 	fmt.Println(" ")
 
-	// Generate/Check linkSums for all links
-	// (linkSum is just the current path/file snapshot for one end of a link, one for A and one for B)
-	// (ie. each link has two linkSums)
-	// (Used to check for changes on link)
-
 	firstBootSync()
-	// initalizeLinkSum()
 	fmt.Println("================Launch Sequence Complete!")
+}
+
+func firstBootSync() {
+	fmt.Println("---FIRST BOOT SYNC---")
+	for _, currentFolderLink := range folderLinks.FolderLinks {
+		if currentFolderLink.SyncOnStartup {
+			fmt.Println("\n=======", currentFolderLink.Name, "|", currentFolderLink.UUID, "=======")
+
+			_, folderAError := os.Open(currentFolderLink.FolderA)
+			_, folderBError := os.Open(currentFolderLink.FolderB)
+
+			if folderAError == nil && folderBError == nil {
+				checkedFiles := []string{}
+				walkItems := []WalkItem{}
+				fmt.Println("Folder A: ", currentFolderLink.FolderA, "\nFolder B:", currentFolderLink.FolderB)
+
+				// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderA, "-> ("+currentFolderLink.FolderB+")")
+				WalkCheck(&currentFolderLink, false, &checkedFiles, &walkItems)
+
+				// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderB, "-> ("+currentFolderLink.FolderA+")")
+				WalkCheck(&currentFolderLink, true, &checkedFiles, &walkItems)
+
+				// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles))
+				for _, currentWalkItem := range walkItems {
+					currentWalkItem.quickSync()
+				}
+
+				fmt.Println(" ")
+			} else {
+				if folderAError != nil {
+					fmt.Println("Error loading links A:", folderAError)
+				}
+				if folderBError != nil {
+					fmt.Println("Error loading links B:", folderBError)
+				}
+
+			}
+		}
+	}
 }

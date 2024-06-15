@@ -11,20 +11,25 @@ type FolderLinks struct {
 }
 
 type FolderLink struct {
+	//// General info (Bare minimum)
 	Name    string `json:"name"`
 	FolderA string `json:"folderA"`
 	FolderB string `json:"folderB"`
-	//0 = no changes/idle state, 1 = changes detected, 2 = approved sync, 3 = cancel changes (folder B has changes, folder A reject changes and makes B in sync with A)
-	status          int
-	UUID            int    `json:"uuid"`
+	UUID    int    `json:"uuid"`
+
+	//// General syncing settings
 	FolderRecursion bool   `json:"folderRecursion"` // whether or not we want to enter/copy folders
-	SyncType        string `json:"syncType"`        //'normal' = bidirectional, 'specific-exts' = only looks for files in specified format, creates 1:1 copy with different file ext
+	SyncOnStartup   bool   `json:"syncOnStartup"`
+	ContinuousSync  bool   `json:"continuousSync"`
+	SyncType        string `json:"syncType"` //'normal' = bidirectional, 'specific-exts' = only looks for files in specified format, creates 1:1 copy with different file ext
+
 	////Additional properties for 'specific-exts' type
 	//File format used for each folder, respectively
 	SpecificExts_FolderA       string `json:"specificExts_FolderA"`
 	SpecificExts_FolderB       string `json:"specificExts_FolderB"`
 	SpecificExts_CaseSensitive bool   `json:"specificExts_CaseSensitive"`
 
+	//// General (Basic) Filtering rules
 	//In/Ex-clude Files
 	FileInclude []string `json:"fileInclude"`
 	FileExclude []string `json:"fileExclude"`

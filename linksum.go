@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// This is the routine that runs when we want continous watching
+// This is the routine that runs when we want continuous watching
 func linkSumRoutine(FolderLink *FolderLink) {
 	defer wg.Done()
 
