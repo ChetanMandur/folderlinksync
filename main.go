@@ -22,12 +22,11 @@ func main() {
 	// ON LAUNCH
 	launchSequence()
 
-	// for _, currentFolderLink := range folderLinks.FolderLinks {
-	// 	wg.Add(1)
-	// 	go linkSumRoutine(&currentFolderLink)
-	// }
-
-	// wg.Wait()
+	for _, currentFolderLink := range folderLinks.FolderLinks {
+		wg.Add(1)
+		go linkSumRoutine(&currentFolderLink)
+	}
+	wg.Wait()
 
 }
 
@@ -40,7 +39,7 @@ func launchSequence() {
 
 	// // links.json will hold all A <-> B links, here A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links.json")
+	linksJson, linksError := os.ReadFile("links3.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// linkSums is what holds all directory info (name+lastModified)
+// This is the routine that runs when we want continous watching
 func linkSumRoutine(FolderLink *FolderLink) {
 	defer wg.Done()
 
@@ -107,7 +107,7 @@ func walkItemLinkSumCheck(walkItem *WalkItem, folderHistory *[]string) {
 			status, time = walkItem.syncStatus()
 		}
 
-		//This means that the value @ relative path is not up to date
+		//This means that the linksum value @ uuid @ relative path does not exist
 		if linkSums[folderLink.UUID][relativePath].IsZero() {
 			// fmt.Println("linksum reporting zero")
 			linkSums[folderLink.UUID][relativePath] = time
@@ -115,6 +115,7 @@ func walkItemLinkSumCheck(walkItem *WalkItem, folderHistory *[]string) {
 
 		}
 
+		//This means that the linksum value @ uuid @ relative path is not up to date
 		if linkSums[folderLink.UUID][relativePath] != time {
 			// fmt.Println("linksum time not the same")
 			linkSums[folderLink.UUID][relativePath] = time
