@@ -48,6 +48,24 @@ type WalkItem struct {
 	destination  string
 }
 
+func (w *WalkItem) StillAlive() (output bool) {
+	folderLink, _, _ := w.properties()
+
+	//CHECK IF FOLDER LINK ROOT STILL EXISTS
+	_, folderAError := os.Stat(folderLink.FolderA)
+	_, folderBError := os.Stat(folderLink.FolderB)
+
+	folderAExists := !os.IsNotExist(folderAError)
+	folderBExists := !os.IsNotExist(folderBError)
+
+	if !folderAExists || !folderBExists {
+		return false
+	}
+
+	return true
+
+}
+
 func (w *WalkItem) properties() (FolderLink *FolderLink, Inverse bool, RelativePath string) {
 	return w.FolderLink, w.Inverse, w.RelativePath
 }
@@ -86,6 +104,10 @@ func (w *WalkItem) itemPaths() (source string, destination string) {
 // Outputs the current status between the two files refered to in WalkItem
 func (w *WalkItem) syncStatus() (status string, mostRecentTime time.Time) {
 	source, destination := w.itemPaths()
+
+	if !w.StillAlive() {
+		return "ERROR::FOLDERLINK_ERROR", time.Time{}
+	}
 
 	sourceFileStat, sourceError := os.Stat(source)
 	var sourceFileModTime time.Time

@@ -187,7 +187,7 @@ The goal of this function is to walk through a directory, and return a list of f
 The function takes in account acceptions/exclusions listed in the related FolderLink.
 The list is of type WalkItem, which consists of a file's relative path, related FolderLink, whether it is 'inverse' or not (aka whether it is folder B or A in the Link)
 */
-func WalkCheck(folderLink *FolderLink, inverse bool, checkedFiles *[]string, walkItems *[]WalkItem) {
+func WalkCheck(folderLink *FolderLink, inverse bool, checkedFiles *[]string, walkItems *[]WalkItem) (output error) {
 	var source string
 	// var destination string
 
@@ -199,45 +199,51 @@ func WalkCheck(folderLink *FolderLink, inverse bool, checkedFiles *[]string, wal
 
 	filepath.Walk(source, func(filePath string, file os.FileInfo, err error) error {
 
-		fileName := file.Name()
-		fileIsDir := file.IsDir()
+		if err == nil {
+			fileName := file.Name()
+			fileIsDir := file.IsDir()
 
-		if fileIsDir {
-			fileIsRoot := (filepath.Base(filePath) == filepath.Base(source))
+			if fileIsDir {
+				fileIsRoot := (filepath.Base(filePath) == filepath.Base(source))
 
-			if !fileIsRoot {
-				if (!folderFilterCheck(folderLink, fileName)) || (!folderLink.FolderRecursion) {
-					return filepath.SkipDir
+				if !fileIsRoot {
+					if (!folderFilterCheck(folderLink, fileName)) || (!folderLink.FolderRecursion) {
+						return filepath.SkipDir
+					}
 				}
+
+			} else {
+				fileNameShort, fileNameExt := FileNameSplitter(fileName)
+
+				if !fileFilterCheck(folderLink, inverse, fileNameShort, fileNameExt) {
+					return nil
+				}
+
+				extensionlessRelativePath := false
+				if folderLink.SyncType != "normal" {
+					extensionlessRelativePath = true
+				}
+
+				relativePath := relativePathFromRoot(source, filePath, extensionlessRelativePath)
+
+				if !slices.Contains(*checkedFiles, relativePath) {
+					*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: relativePath})
+					*checkedFiles = append(*checkedFiles, relativePath)
+					// fmt.Println("Added", relativePath)
+
+				} /* else {
+					fmt.Println("Already checked!", relativePath)
+				} */
+
 			}
 
+			return nil
 		} else {
-			fileNameShort, fileNameExt := FileNameSplitter(fileName)
-
-			if !fileFilterCheck(folderLink, inverse, fileNameShort, fileNameExt) {
-				return nil
-			}
-
-			extensionlessRelativePath := false
-			if folderLink.SyncType != "normal" {
-				extensionlessRelativePath = true
-			}
-
-			relativePath := relativePathFromRoot(source, filePath, extensionlessRelativePath)
-
-			if !slices.Contains(*checkedFiles, relativePath) {
-				*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: relativePath})
-				*checkedFiles = append(*checkedFiles, relativePath)
-				// fmt.Println("Added", relativePath)
-
-			} /* else {
-				fmt.Println("Already checked!", relativePath)
-			} */
-
+			output = err
+			return filepath.SkipAll
 		}
-
-		return nil
 
 	})
 
+	return output
 }

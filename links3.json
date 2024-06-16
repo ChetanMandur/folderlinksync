@@ -3,8 +3,8 @@
     {
       "uuid":1,
       "name":"TEST CASE (PSP/PC): gba",
-      "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\gbaSAVES",
-      "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\gbaSAVES",
+      "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\gbaSAVES",
+      "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\gbaSAVES",
       "folderRecursion":true,
       "syncOnStartup":true,
       "continuousSync":true,
@@ -28,8 +28,8 @@
     {
       "uuid":3,
       "name":"TEST CASE (PSP/PC): snes",
-      "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\snesSAVES",
-      "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\snesSAVES",
+      "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\snesSAVES",
+      "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\snesSAVES",
       "folderRecursion":false,
       "syncOnStartup":true,
       "continuousSync":true,
