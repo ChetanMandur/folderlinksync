@@ -199,49 +199,49 @@ func WalkCheck(folderLink *FolderLink, inverse bool, checkedFiles *[]string, wal
 
 	filepath.Walk(source, func(filePath string, file os.FileInfo, err error) error {
 
-		if err == nil {
-			fileName := file.Name()
-			fileIsDir := file.IsDir()
-
-			if fileIsDir {
-				fileIsRoot := (filepath.Base(filePath) == filepath.Base(source))
-
-				if !fileIsRoot {
-					if (!folderFilterCheck(folderLink, fileName)) || (!folderLink.FolderRecursion) {
-						return filepath.SkipDir
-					}
-				}
-
-			} else {
-				fileNameShort, fileNameExt := FileNameSplitter(fileName)
-
-				if !fileFilterCheck(folderLink, inverse, fileNameShort, fileNameExt) {
-					return nil
-				}
-
-				extensionlessRelativePath := false
-				if folderLink.SyncType != "normal" {
-					extensionlessRelativePath = true
-				}
-
-				relativePath := relativePathFromRoot(source, filePath, extensionlessRelativePath)
-
-				if !slices.Contains(*checkedFiles, relativePath) {
-					*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: relativePath})
-					*checkedFiles = append(*checkedFiles, relativePath)
-					// fmt.Println("Added", relativePath)
-
-				} /* else {
-					fmt.Println("Already checked!", relativePath)
-				} */
-
-			}
-
-			return nil
-		} else {
+		if err != nil {
 			output = err
 			return filepath.SkipAll
 		}
+
+		fileName := file.Name()
+		fileIsDir := file.IsDir()
+
+		if fileIsDir {
+			fileIsRoot := (filepath.Base(filePath) == filepath.Base(source))
+
+			if !fileIsRoot {
+				if (!folderFilterCheck(folderLink, fileName)) || (!folderLink.FolderRecursion) {
+					return filepath.SkipDir
+				}
+			}
+
+		} else {
+			fileNameShort, fileNameExt := FileNameSplitter(fileName)
+
+			if !fileFilterCheck(folderLink, inverse, fileNameShort, fileNameExt) {
+				return nil
+			}
+
+			extensionlessRelativePath := false
+			if folderLink.SyncType != "normal" {
+				extensionlessRelativePath = true
+			}
+
+			relativePath := relativePathFromRoot(source, filePath, extensionlessRelativePath)
+
+			if !slices.Contains(*checkedFiles, relativePath) {
+				*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: relativePath})
+				*checkedFiles = append(*checkedFiles, relativePath)
+				// fmt.Println("Added", relativePath)
+
+			} /* else {
+				fmt.Println("Already checked!", relativePath)
+			} */
+
+		}
+
+		return nil
 
 	})
 

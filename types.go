@@ -66,6 +66,24 @@ func (w *WalkItem) StillAlive() (output bool) {
 
 }
 
+func (w *WalkItem) ItemsExists() (output bool) {
+	source, destination := w.itemPaths()
+
+	//CHECK IF FOLDER LINK ROOT STILL EXISTS
+	_, sourceError := os.Stat(source)
+	_, destinationError := os.Stat(destination)
+
+	sourceExists := !os.IsNotExist(sourceError)
+	destinationExists := !os.IsNotExist(destinationError)
+
+	if !sourceExists || !destinationExists {
+		return false
+	}
+
+	return true
+
+}
+
 func (w *WalkItem) properties() (FolderLink *FolderLink, Inverse bool, RelativePath string) {
 	return w.FolderLink, w.Inverse, w.RelativePath
 }

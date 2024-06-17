@@ -40,7 +40,7 @@ func launchSequence() {
 
 	// // links.json will hold all A <-> B links, here A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links2.json")
+	linksJson, linksError := os.ReadFile("links3.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")
@@ -73,41 +73,46 @@ func launchSequence() {
 func firstBootSync() {
 	fmt.Println("---FIRST BOOT SYNC---")
 	for _, currentFolderLink := range folderLinks.FolderLinks {
-		if currentFolderLink.SyncOnStartup {
-			fmt.Println("\n=======", currentFolderLink.Name, "|", currentFolderLink.UUID, "=======")
-
-			_, folderAError := os.Open(currentFolderLink.FolderA)
-			_, folderBError := os.Open(currentFolderLink.FolderB)
-
-			if folderAError == nil && folderBError == nil {
-				checkedFiles := []string{}
-				walkItems := []WalkItem{}
-				fmt.Println("Folder A: ", currentFolderLink.FolderA, "\nFolder B:", currentFolderLink.FolderB)
-
-				// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderA, "-> ("+currentFolderLink.FolderB+")")
-				walkingError := WalkCheck(&currentFolderLink, false, &checkedFiles, &walkItems)
-				if walkingError == nil {
-					// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderB, "-> ("+currentFolderLink.FolderA+")")
-					walkingError = WalkCheck(&currentFolderLink, true, &checkedFiles, &walkItems)
-
-					if walkingError == nil {
-						// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles))
-						for _, currentWalkItem := range walkItems {
-							currentWalkItem.quickSync()
-						}
-					}
-				}
-
-				fmt.Println(" ")
-			} else {
-				if folderAError != nil {
-					fmt.Println("Error loading links A:", folderAError)
-				}
-				if folderBError != nil {
-					fmt.Println("Error loading links B:", folderBError)
-				}
-
-			}
+		if !currentFolderLink.SyncOnStartup {
+			continue
 		}
+
+		fmt.Println("\n=======", currentFolderLink.Name, "|", currentFolderLink.UUID, "=======")
+
+		_, folderAError := os.Open(currentFolderLink.FolderA)
+		_, folderBError := os.Open(currentFolderLink.FolderB)
+
+		if folderAError != nil || folderBError != nil {
+			if folderAError != nil {
+				fmt.Println("Error loading links A:", folderAError)
+			}
+			if folderBError != nil {
+				fmt.Println("Error loading links B:", folderBError)
+			}
+			continue
+		}
+
+		checkedFiles := []string{}
+		walkItems := []WalkItem{}
+		fmt.Println("Folder A: ", currentFolderLink.FolderA, "\nFolder B:", currentFolderLink.FolderB)
+
+		// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderA, "-> ("+currentFolderLink.FolderB+")")
+		walkingError := WalkCheck(&currentFolderLink, false, &checkedFiles, &walkItems)
+		if walkingError != nil {
+			continue
+		}
+		// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderB, "-> ("+currentFolderLink.FolderA+")")
+		walkingError = WalkCheck(&currentFolderLink, true, &checkedFiles, &walkItems)
+
+		if walkingError != nil {
+			continue
+		}
+
+		// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles))
+		for _, currentWalkItem := range walkItems {
+			currentWalkItem.quickSync()
+		}
+
+		fmt.Println(" ")
 	}
 }
