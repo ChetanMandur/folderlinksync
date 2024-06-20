@@ -143,11 +143,11 @@ func walkItemPollingCheck(walkItem *WalkItem, folderHistory *[]string) (success 
 		// fmt.Println("DESTINATION!=EXIST")
 		if !walkItem.filesExists() {
 			if slices.Contains(*folderHistory, relativePath) {
-				fmt.Println(relativePath, "I think this file was deleted at Folder B")
+				fmt.Println(relativePath, "File was deleted @ Folder B")
 				walkItemFileRemover(walkItem)
 				fileDeleted = true
 			} else {
-				fmt.Println(relativePath, "New file that is not yet at Folder B")
+				fmt.Println(relativePath, "New file created @ Folder A")
 			}
 		}
 
@@ -160,20 +160,20 @@ func walkItemPollingCheck(walkItem *WalkItem, folderHistory *[]string) (success 
 		// fmt.Println("SOURCE!=EXIST")
 		if !walkItem.filesExists() {
 			if slices.Contains(*folderHistory, relativePath) {
-				fmt.Println(relativePath, "I think this file was deleted at Folder A")
+				fmt.Println(relativePath, "deleted @ Folder A")
 				walkItemFileRemover(walkItem)
 
 				fileDeleted = true
 
 			} else {
-				fmt.Println(relativePath, "New file that is not yet at Folder A")
-				fmt.Println()
+				fmt.Println(relativePath, "created @ Folder B")
 
 			}
 		}
 	}
 
 	if fileDeleted {
+		fmt.Println()
 		return false
 	}
 

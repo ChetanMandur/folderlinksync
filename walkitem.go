@@ -203,7 +203,7 @@ func (w *WalkItem) copySync(inverse bool) (success bool) {
 		fmt.Print("😈")
 	}
 
-	fmt.Print("Copy!", source, " ", sourceModTime, "--->", destination, " ", destinationModTime, "\n\n")
+	fmt.Print("Copy!\n  ", source, "\n  (", sourceModTime, ")\n  --->\n  ", destination, "\n  (", destinationModTime, ")\n")
 
 	return w.filesExists()
 }
