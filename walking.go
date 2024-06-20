@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 )
 
 func pathConnector(locations []string) string {
@@ -21,6 +22,12 @@ func pathConnector(locations []string) string {
 
 	output = filepath.ToSlash(output)
 	return output
+}
+
+func roundedModTime(input os.FileInfo) (output time.Time) {
+	inputModTime := input.ModTime()
+	roundDuration := time.Second
+	return inputModTime.Round(roundDuration)
 }
 
 // Given a path (assumed to be within one of the folder link paths), find its relative path from root

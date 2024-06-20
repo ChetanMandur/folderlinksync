@@ -79,7 +79,7 @@ func walkItemFileRemover(walkItem *WalkItem) {
 
 }
 
-func linkSumUpdate(walkItem *WalkItem) (success bool) {
+func linkSumUpdate(walkItem *WalkItem, recentTime time.Time) (success bool) {
 	folderLink, relativePath := walkItem.properties()
 
 	if linkSums[folderLink.UUID] == nil {
@@ -90,6 +90,10 @@ func linkSumUpdate(walkItem *WalkItem) (success bool) {
 	status, time := walkItem.syncStatus()
 
 	if status != "INSYNC" {
+		return false
+	}
+
+	if time != recentTime {
 		return false
 	}
 
@@ -117,7 +121,7 @@ func linkSumUpdate(walkItem *WalkItem) (success bool) {
 func walkItemPollingCheck(walkItem *WalkItem, folderHistory *[]string) (success bool) {
 	_, relativePath := walkItem.properties()
 
-	status, _ := walkItem.syncStatus()
+	status, recentTime := walkItem.syncStatus()
 
 	errorCheck := false
 	if len(status) > 6 {
@@ -183,10 +187,10 @@ func walkItemPollingCheck(walkItem *WalkItem, folderHistory *[]string) (success 
 			return true
 		}
 		// fmt.Println("NOT INSYNC", status)
-		status = walkItem.quickSync()
+		status, recentTime = walkItem.quickSync()
 	}
 
-	linkSumUpdate(walkItem)
+	linkSumUpdate(walkItem, recentTime)
 
 	return false
 }
