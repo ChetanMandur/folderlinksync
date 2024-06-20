@@ -1,14 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
-
-	copy "github.com/otiai10/copy"
 )
 
 func pathConnector(locations []string) string {
@@ -27,36 +23,16 @@ func pathConnector(locations []string) string {
 	return output
 }
 
-// Copies file to destination, and updates the file's mod time to the given mod time
-func copySync(source string, destination string, newTime time.Time) {
-	//True= actually copies False = Just print the paths it was gonna use (to -> from)
-	yes := true
-
-	if yes {
-		copy.Copy(source, destination)
-		err := os.Chtimes(destination, newTime, newTime)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println("Copy complete!", source, "--->", destination)
-
-	} else {
-		fmt.Println(source, "--->", destination)
-	}
-
-}
-
 // Given a path (assumed to be within one of the folder link paths), find its relative path from root
 // Relative path is the path of the file without directory info beyond root,
 // For example, given the folder root (either FolderA or FolderB) and the path of a file within its directory, return relative path
 // FolderRoot = C:/FolderRoot/, FilePath = C:/FolderRoot/depth/test.txt, therefore RelativePath= /depth/test.txt
 // root is the path of the root folder, file is the path of the file in question (with file assumed to be within root)
-func relativePathFromRoot(root string, file string, extensionless bool) string {
-	//Preping the strings
-	output := ""
+func relativePathFromRoot(root string, file string, extensionless bool) (relativePath string) {
+	//Preping the 'file' path string
 	file = filepath.ToSlash(file) //cleans the string
 
-	//Splitting  root
+	//Splitting root
 	rootSplit := strings.Split(root, "/")
 
 	//use backslash if forward slash didnt work
@@ -75,21 +51,20 @@ func relativePathFromRoot(root string, file string, extensionless bool) string {
 	}
 
 	//Chop off root from the source
-	fileReduced := fileSplit[len(rootSplit):]
+	relativePathSplit := fileSplit[len(rootSplit):]
 
 	//Chopping off the extension if we extensionless
 	if extensionless {
-		// //               split by '.'  (the last element in path (ie. file))
-		// fileNameSplit := strings.Split(fileReduced[len(fileReduced)-1], ".")
-		// fileReduced[len(fileReduced)-1] = fileNameSplit[0] // 0 = file name, 1= ext
-		name, _ := FileNameSplitter(fileReduced[len(fileReduced)-1])
-		fileReduced[len(fileReduced)-1] = name
+		//Splits the file name (from relative path), ignores the ext
+		name, _ := FileNameSplitter(relativePathSplit[len(relativePathSplit)-1])
+		//Sets file name (from relative path) to just name, no ext
+		relativePathSplit[len(relativePathSplit)-1] = name
 	}
 
 	//make it all into a string and output
-	output = temp_slash + pathConnector(fileReduced)
+	relativePath = temp_slash + pathConnector(relativePathSplit)
 
-	return output
+	return relativePath
 
 }
 
@@ -164,6 +139,7 @@ func folderFilterCheck(folderLink *FolderLink, sourceFileName string) bool {
 	return true
 }
 
+// Given a name in style "file.ext", can return both "file" and "ext" separately
 func FileNameSplitter(originalName string) (finalName string, finalExt string) {
 	originalNameSplit := strings.Split(originalName, ".")
 
@@ -231,7 +207,7 @@ func WalkCheck(folderLink *FolderLink, inverse bool, checkedFiles *[]string, wal
 			relativePath := relativePathFromRoot(source, filePath, extensionlessRelativePath)
 
 			if !slices.Contains(*checkedFiles, relativePath) {
-				*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, Inverse: inverse, RelativePath: relativePath})
+				*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, RelativePath: relativePath})
 				*checkedFiles = append(*checkedFiles, relativePath)
 				// fmt.Println("Added", relativePath)
 

@@ -24,7 +24,7 @@ func main() {
 	for _, currentFolderLink := range folderLinks.FolderLinks {
 		if currentFolderLink.ContinuousSync {
 			wg.Add(1)
-			go linkSumRoutine(&currentFolderLink)
+			go pollingRoutine(&currentFolderLink)
 		}
 	}
 	wg.Wait()

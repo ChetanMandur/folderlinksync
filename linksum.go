@@ -8,7 +8,7 @@ import (
 )
 
 // This is the routine that runs when we want continuous watching
-func linkSumRoutine(FolderLink *FolderLink) {
+func pollingRoutine(FolderLink *FolderLink) {
 	defer wg.Done()
 
 	fmt.Println("\n=======", FolderLink.Name, "|", FolderLink.UUID, "=======")
@@ -42,14 +42,14 @@ func linkSumRoutine(FolderLink *FolderLink) {
 				continue
 			}
 
-			linkSumError := false
+			pollingError := false
 			for _, currentWalkItem := range walkItems {
-				linkSumError = walkItemLinkSumCheck(&currentWalkItem, &folderHistory)
-				if linkSumError {
+				pollingError = walkItemPollingCheck(&currentWalkItem, &folderHistory)
+				if pollingError {
 					break
 				}
 			}
-			if !linkSumError {
+			if !pollingError {
 				folderHistory = checkedFiles
 
 			}
@@ -72,15 +72,15 @@ func linkSumRoutine(FolderLink *FolderLink) {
 func walkItemFileRemover(walkItem *WalkItem) {
 	source, destination := walkItem.itemPaths()
 
-	if walkItem.StillAlive() {
+	if walkItem.stillAlive() {
 		os.Remove(source)
 		os.Remove(destination)
 	}
 
 }
 
-func walkItemLinkSumCheck(walkItem *WalkItem, folderHistory *[]string) (output bool) {
-	folderLink, inverse, relativePath := walkItem.properties()
+func linkSumUpdate(walkItem *WalkItem) (success bool) {
+	folderLink, relativePath := walkItem.properties()
 
 	if linkSums[folderLink.UUID] == nil {
 		fmt.Print("LinkSum at UUID ", folderLink.UUID, " does not exist... Creating one!\n")
@@ -89,82 +89,8 @@ func walkItemLinkSumCheck(walkItem *WalkItem, folderHistory *[]string) (output b
 
 	status, time := walkItem.syncStatus()
 
-	errorCheck := false
-	if len(status) > 6 {
-		errorCheck = status[0:7] == "ERROR::"
-	}
-
-	if errorCheck {
-		fmt.Println("Error hit!", status)
-		switch status {
-		case "ERROR::FOLDERLINK_ERROR":
-			return true
-		default:
-			return false
-		}
-	}
-
-	fileDeleted := false
-
-	var sourceString, destinationString string
-
-	if !inverse {
-		sourceString = "FOLDERa"
-		destinationString = "FOLDERb"
-	} else {
-		sourceString = "FOLDERb"
-		destinationString = "FOLDERa"
-	}
-
-	if status == "DESTINATION!=EXIST" {
-		if !walkItem.StillAlive() {
-			return true
-		}
-		// fmt.Println("DESTINATION!=EXIST")
-		if !walkItem.ItemsExists() {
-			if slices.Contains(*folderHistory, relativePath) {
-				fmt.Println(relativePath, "I think this file was deleted at", destinationString)
-				walkItemFileRemover(walkItem)
-				fileDeleted = true
-			} else {
-				fmt.Println(relativePath, "New file that is not yet at", destinationString)
-			}
-		}
-
-	}
-
-	if status == "SOURCE!=EXIST" {
-		if !walkItem.StillAlive() {
-			return true
-		}
-		// fmt.Println("SOURCE!=EXIST")
-		if !walkItem.ItemsExists() {
-			if slices.Contains(*folderHistory, relativePath) {
-				fmt.Println(relativePath, "I think this file was deleted at", sourceString)
-				walkItemFileRemover(walkItem)
-
-				fileDeleted = true
-
-			} else {
-				fmt.Println(relativePath, "New file that is not yet at", sourceString)
-				fmt.Println()
-
-			}
-		}
-	}
-
-	if fileDeleted {
+	if status != "INSYNC" {
 		return false
-	}
-
-	//For when the files are not in sync, keep trying to copy until it reports synced
-	for status != "INSYNC" {
-		if !walkItem.StillAlive() {
-			return true
-		}
-		// fmt.Println("NOT INSYNC", status)
-		walkItem.quickSync()
-		status, time = walkItem.syncStatus()
 	}
 
 	//This means that the linksum value @ uuid @ relative path does not exist
@@ -182,8 +108,85 @@ func walkItemLinkSumCheck(walkItem *WalkItem, folderHistory *[]string) (output b
 		linkSums[folderLink.UUID][relativePath] = time
 		fmt.Println("updated linksum:", relativePath, "@", linkSums[folderLink.UUID][relativePath])
 		fmt.Println()
+	}
+
+	return true
+
+}
+
+func walkItemPollingCheck(walkItem *WalkItem, folderHistory *[]string) (success bool) {
+	_, relativePath := walkItem.properties()
+
+	status, _ := walkItem.syncStatus()
+
+	errorCheck := false
+	if len(status) > 6 {
+		errorCheck = status[0:7] == "ERROR::"
+	}
+
+	if errorCheck {
+		fmt.Println("Error hit!", status)
+		switch status {
+		case "ERROR::FOLDERLINK_NOT_ALIVE":
+			return true
+		default:
+			return false
+		}
+	}
+
+	fileDeleted := false
+
+	if status == "FILEB!=EXIST" {
+		if !walkItem.stillAlive() {
+			return true
+		}
+		// fmt.Println("DESTINATION!=EXIST")
+		if !walkItem.filesExists() {
+			if slices.Contains(*folderHistory, relativePath) {
+				fmt.Println(relativePath, "I think this file was deleted at Folder B")
+				walkItemFileRemover(walkItem)
+				fileDeleted = true
+			} else {
+				fmt.Println(relativePath, "New file that is not yet at Folder B")
+			}
+		}
 
 	}
+
+	if status == "FILEA!=EXIST" {
+		if !walkItem.stillAlive() {
+			return true
+		}
+		// fmt.Println("SOURCE!=EXIST")
+		if !walkItem.filesExists() {
+			if slices.Contains(*folderHistory, relativePath) {
+				fmt.Println(relativePath, "I think this file was deleted at Folder A")
+				walkItemFileRemover(walkItem)
+
+				fileDeleted = true
+
+			} else {
+				fmt.Println(relativePath, "New file that is not yet at Folder A")
+				fmt.Println()
+
+			}
+		}
+	}
+
+	if fileDeleted {
+		return false
+	}
+
+	//For when the files are not in sync, keep trying to copy until it reports synced
+	for status != "INSYNC" {
+		if !walkItem.stillAlive() {
+			return true
+		}
+		// fmt.Println("NOT INSYNC", status)
+		status = walkItem.quickSync()
+	}
+
+	linkSumUpdate(walkItem)
 
 	return false
 }
