@@ -19,19 +19,36 @@ var linkSums = make(map[int]map[string]time.Time)
 var wg sync.WaitGroup
 
 func main() {
-	launchSequence()
+	alive := true
+	delay := 5
+	delayInc := 3
+	delayMax := 59
+	for alive {
+		if launchSequence() {
+			delay = 5
+			for _, currentFolderLink := range folderLinks.FolderLinks {
+				if currentFolderLink.ContinuousSync {
+					wg.Add(1)
+					go pollingRoutine(&currentFolderLink)
+				}
+			}
+			wg.Wait()
 
-	for _, currentFolderLink := range folderLinks.FolderLinks {
-		if currentFolderLink.ContinuousSync {
-			wg.Add(1)
-			go pollingRoutine(&currentFolderLink)
+			alive = false
+		} else {
+			fmt.Println("Launch failed! Retrying in", delay, "seconds...")
+			time.Sleep(time.Duration(delay) * time.Second)
+			if delay >= delayMax {
+				alive = false
+			}
+			delay += delayInc
 		}
 	}
-	wg.Wait()
-
+	fmt.Println("Closing... goodbye!")
+	time.Sleep(time.Second * 5)
 }
 
-func launchSequence() {
+func launchSequence() (succcess bool) {
 	fmt.Println("---LAUNCH SEQUENCE---")
 	// Start webserver
 	// Need to figure out a way to make this constantly running
@@ -40,10 +57,11 @@ func launchSequence() {
 
 	// // links.json will hold all A <-> B links, here A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links3.json")
+	linksJson, linksError := os.ReadFile("links6.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")
+		return false
 	}
 
 	// fmt.Println("Opened 'links.json'!")
@@ -68,6 +86,7 @@ func launchSequence() {
 
 	firstBootSync()
 	fmt.Println("================Launch Sequence Complete!")
+	return true
 }
 
 func firstBootSync() {
