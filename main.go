@@ -57,7 +57,7 @@ func launchSequence() (succcess bool) {
 
 	// // links.json will hold all A <-> B links, here A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links6.json")
+	linksJson, linksError := os.ReadFile("links3.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")
@@ -79,7 +79,9 @@ func launchSequence() (succcess bool) {
 		current.FolderB, _ = filepath.Abs(current.FolderB) // I realized the worst
 		fmt.Println("--Folder A: " + current.FolderA)
 		fmt.Println("--Folder B: " + current.FolderB)
-		fmt.Println(current.FolderRecursion, current.SyncType, current.SpecificExts_FolderA, current.SpecificExts_FolderB, current.SpecificExts_CaseSensitive)
+		// fmt.Println(current)
+		// fmt.Println(current.FolderRecursion, current.SyncType, current.SpecificExts_FolderA, current.SpecificExts_FolderB, current.SpecificExts_CaseSensitive)
+		// fmt.Println(current.FileExclude, current.FileInclude, current.ExtExclude, current.ExtInclude, current.FolderExclude, current.FolderInclude)
 	}
 
 	fmt.Println(" ")
@@ -127,7 +129,7 @@ func firstBootSync() {
 			continue
 		}
 
-		// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles))
+		// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles), checkedFiles)
 		for _, currentWalkItem := range walkItems {
 			currentWalkItem.quickSync()
 		}

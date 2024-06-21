@@ -9,9 +9,10 @@
       "syncOnStartup":true,
       "continuousSync":true,
       "syncType":"specific-exts",
-      "specificExts_FolderB": "SRM",
+      "specificExts_FolderB": "srm",
       "specificExts_FolderA": "sav",
       "specificExts_CaseSensitive:": false
+      
     },
     {
       "uuid":2,
@@ -22,7 +23,7 @@
       "syncOnStartup":true,
       "continuousSync":true,
       "syncType":"normal", 
-      "FolderExclude": ["ARK_01234"]
+      "folderExclude": ["ARK_01234"]
 
     },
     {

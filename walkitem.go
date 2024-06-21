@@ -103,11 +103,11 @@ func (w *WalkItem) syncStatus() (status string, recentTime time.Time) {
 
 	if fileAExists && !fileBExists {
 
-		return "FILEB!=EXIST", roundedModTime(fileA)
+		return "FILEB!=EXIST", w.FolderLink.roundedModTime(fileA)
 	}
 
 	if !fileAExists && fileBExists {
-		return "FILEA!=EXIST", roundedModTime(fileB)
+		return "FILEA!=EXIST", w.FolderLink.roundedModTime(fileB)
 
 	}
 
@@ -117,8 +117,8 @@ func (w *WalkItem) syncStatus() (status string, recentTime time.Time) {
 	}
 
 	if fileAExists && fileBExists {
-		fileAModTime := roundedModTime(fileA)
-		fileBModTime := roundedModTime(fileB)
+		fileAModTime := w.FolderLink.roundedModTime(fileA)
+		fileBModTime := w.FolderLink.roundedModTime(fileB)
 
 		// No errors means we are in! We grab the mod time for the destination file and begin our work of finding the most up-to date version
 
@@ -179,7 +179,7 @@ func (w *WalkItem) copySync(inverse bool, recentTime time.Time) (success bool) {
 	sourceItem, sourceErr := os.Stat(source)
 	destinationItem, destinationErr := os.Stat(destination)
 
-	if !recentTime.Equal(roundedModTime(sourceItem)) {
+	if !recentTime.Equal(w.FolderLink.roundedModTime(sourceItem)) {
 		return false
 	}
 
@@ -190,7 +190,7 @@ func (w *WalkItem) copySync(inverse bool, recentTime time.Time) (success bool) {
 	}
 
 	if destinationErr == nil {
-		destinationModTime = roundedModTime(destinationItem)
+		destinationModTime = w.FolderLink.roundedModTime(destinationItem)
 	}
 
 	if !w.stillAlive() {
@@ -200,6 +200,7 @@ func (w *WalkItem) copySync(inverse bool, recentTime time.Time) (success bool) {
 	if yes {
 		copy.Copy(source, destination)
 		// os.Chtimes(source, recentTime, recentTime)
+		w.FolderLink.fileModDelay()
 		os.Chtimes(destination, recentTime, recentTime)
 	} else {
 		fmt.Print("😈")

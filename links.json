@@ -6,7 +6,9 @@
       "folderA":"./test/a",
       "folderB":"./test/b",
       "folderRecursion":true,
-      "syncType":"normal"
+      "syncType":"normal",
+      "syncOnStartup":true
+
     },
     {
       "uuid":2,
@@ -14,7 +16,8 @@
       "folderA":"./test/b",
       "folderB":"./test/c",
       "folderRecursion":true,
-      "syncType":"normal"
+      "syncType":"normal",
+      "syncOnStartup":true
     },
     {
       "uuid":3,
@@ -22,7 +25,8 @@
       "folderA":"./test/a",
       "folderB":"./test/d",
       "folderRecursion":true,
-      "syncType":"normal"
+      "syncType":"normal",
+      "syncOnStartup":true
 
     },
     {
@@ -31,7 +35,8 @@
       "folderA":"./test/a",
       "folderB":"./test2/a",
       "folderRecursion":true,
-      "syncType":"normal"
+      "syncType":"normal",
+      "syncOnStartup":true
     },
     {
       "uuid":5,
@@ -42,7 +47,8 @@
       "syncType":"specific-exts",
       "specificExts_FolderA": "SRM",
       "specificExts_FolderB": "sav",
-      "specificExts_CaseSensitive": false
+      "specificExts_CaseSensitive": false,
+      "syncOnStartup":true
     }, 
     {
       "uuid":6,
@@ -51,8 +57,9 @@
       "folderB":"./test/gbaSAV",
       "folderRecursion":true,
       "syncType":"normal",
-      "ExtInclude": ["SRM"],
-      "ExtExclude": ["sav"]
+      "extInclude": ["SRM"],
+      "extExclude": ["sav"],
+      "syncOnStartup":true
 
     }, 
     {
@@ -62,8 +69,9 @@
       "folderB":"./test/gbaSAV",
       "folderRecursion":true,
       "syncType":"normal",
-      "FileInclude": ["uppercase", "include_uppercase"],
-      "FileExclude": ["lowercase"]
+      "fileInclude": ["uppercase", "include_uppercase"],
+      "fileExclude": ["lowercase"],
+      "syncOnStartup":true
     }, 
     {
       "uuid":8,
@@ -72,8 +80,9 @@
       "folderB":"./test/gbaSAV",
       "folderRecursion":true,
       "syncType":"normal",
-      "FolderInclude": ["include"],
-      "FolderExclude": ["exclude"]
+      "folderInclude": ["include"],
+      "folderExclude": ["exclude"],
+      "syncOnStartup":true
     }, 
     {
       "uuid":9,
@@ -82,7 +91,8 @@
       "folderB":"./test/gbaSAV",
       "folderRecursion":true,
       "syncType":"normal",
-      "ExtExclude": ["sav"]
+      "extExclude": ["sav"],
+      "syncOnStartup":true
 
     }, 
     {
@@ -92,7 +102,8 @@
       "folderB":"./test/gbaSAV",
       "folderRecursion":true,
       "syncType":"normal",
-      "FileExclude": ["lowercase", "include_lowercase", "other_lowercase", "exclude_lowercase"]
+      "fileExclude": ["lowercase", "include_lowercase", "other_lowercase", "exclude_lowercase"],
+      "syncOnStartup":true
     }, 
     {
       "uuid":11,
@@ -101,7 +112,8 @@
       "folderB":"./test/gbaSAV",
       "folderRecursion":true,
       "syncType":"normal",
-      "FolderExclude": ["exclude"]
+      "folderExclude": ["exclude"],
+      "syncOnStartup":true
     }
   
   ]
