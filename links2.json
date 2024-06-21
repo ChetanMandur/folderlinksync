@@ -9,7 +9,7 @@
       "syncOnStartup":true,
       "continuousSync":true,
       "syncType":"specific-exts",
-      "specificExts_FolderA": "SRM",
+      "specificExts_FolderA": "srm",
       "specificExts_FolderB": "sav",
       "specificExts_CaseSensitive:": false
     },

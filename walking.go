@@ -26,8 +26,9 @@ func pathConnector(locations []string) string {
 
 func roundedModTime(input os.FileInfo) (output time.Time) {
 	inputModTime := input.ModTime()
-	roundDuration := time.Second
-	return inputModTime.Round(roundDuration)
+
+	//top 10 tricks of all time
+	return inputModTime //.Round(time.)
 }
 
 // Given a path (assumed to be within one of the folder link paths), find its relative path from root

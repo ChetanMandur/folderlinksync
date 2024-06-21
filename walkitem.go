@@ -190,7 +190,7 @@ func (w *WalkItem) copySync(inverse bool, recentTime time.Time) (success bool) {
 	}
 
 	if destinationErr == nil {
-		destinationModTime = destinationItem.ModTime()
+		destinationModTime = roundedModTime(destinationItem)
 	}
 
 	if !w.stillAlive() {
