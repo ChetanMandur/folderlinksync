@@ -2,6 +2,7 @@
   "links":[
     {
       "uuid":1,
+      "syncDirection":"bi",
       "name":"TEST CASE (PSP/PC): gba",
       "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\gbaSAVES",
       "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\gbaSAVES",
@@ -16,6 +17,7 @@
     },
     {
       "uuid":2,
+      "syncDirection":"bi",
       "name":"TEST CASE (PSP/PC): psp",
       "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\pspSAVES",
       "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\pspSAVES",
@@ -28,6 +30,7 @@
     },
     {
       "uuid":3,
+      "syncDirection":"bi",
       "name":"TEST CASE (PSP/PC): snes",
       "folderB":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\random depth\\B (computer)\\snesSAVES",
       "folderA":"C:\\Users\\Cheta\\Projects\\folderlinksync\\test\\TestCase\\A (hardware)\\snesSAVES",

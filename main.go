@@ -29,7 +29,7 @@ func main() {
 			for _, currentFolderLink := range folderLinks.FolderLinks {
 				if currentFolderLink.ContinuousSync {
 					wg.Add(1)
-					go pollingRoutine(&currentFolderLink)
+					go currentFolderLink.pollingRoutine()
 				}
 			}
 			wg.Wait()
@@ -57,7 +57,7 @@ func launchSequence() (succcess bool) {
 
 	// // links.json will hold all A <-> B links, here A and B are both paths to a folder/directory
 	// // // Paths to both A and B
-	linksJson, linksError := os.ReadFile("links3.json")
+	linksJson, linksError := os.ReadFile("userFiles/links3.json")
 
 	if linksError != nil {
 		fmt.Println("Error! Cannot find 'links.json' in program directory!")
@@ -100,39 +100,22 @@ func firstBootSync() {
 
 		fmt.Println("\n=======", currentFolderLink.Name, "|", currentFolderLink.UUID, "=======")
 
-		_, folderAError := os.Open(currentFolderLink.FolderA)
-		_, folderBError := os.Open(currentFolderLink.FolderB)
-
-		if folderAError != nil || folderBError != nil {
-			if folderAError != nil {
-				fmt.Println("Error loading links A:", folderAError)
-			}
-			if folderBError != nil {
-				fmt.Println("Error loading links B:", folderBError)
+		stillAlive := currentFolderLink.stillAlive()
+		if stillAlive != 0 {
+			switch stillAlive {
+			case 1:
+				fmt.Println("Error loading folde A")
+			case 2:
+				fmt.Println("Error loading folder B")
+			case 3:
+				fmt.Println("Error loading both folders")
 			}
 			continue
 		}
 
-		checkedFiles := []string{}
-		walkItems := []WalkItem{}
 		fmt.Println("Folder A: ", currentFolderLink.FolderA, "\nFolder B:", currentFolderLink.FolderB)
 
-		// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderA, "-> ("+currentFolderLink.FolderB+")")
-		walkingError := WalkCheck(&currentFolderLink, false, &checkedFiles, &walkItems)
-		if walkingError != nil {
-			continue
-		}
-		// fmt.Println("\nWALKING FOLDER ", currentFolderLink.FolderB, "-> ("+currentFolderLink.FolderA+")")
-		walkingError = WalkCheck(&currentFolderLink, true, &checkedFiles, &walkItems)
-
-		if walkingError != nil {
-			continue
-		}
-
-		// fmt.Println("HELLO WORLD\n", len(walkItems), len(checkedFiles), checkedFiles)
-		for _, currentWalkItem := range walkItems {
-			currentWalkItem.quickSync()
-		}
+		currentFolderLink.quickSync()
 
 		fmt.Println(" ")
 	}

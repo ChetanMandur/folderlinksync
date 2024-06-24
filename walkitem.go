@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"time"
 
 	copy "github.com/otiai10/copy"
@@ -17,24 +18,12 @@ type WalkItem struct {
 }
 
 func (w *WalkItem) stillAlive() (output bool) {
-	folderLink, _ := w.properties()
 
-	//CHECK IF FOLDER LINK ROOTS STILL EXISTS
-	_, folderAError := os.Stat(folderLink.FolderA)
-	_, folderBError := os.Stat(folderLink.FolderB)
-
-	folderAExists := !os.IsNotExist(folderAError)
-	folderBExists := !os.IsNotExist(folderBError)
-
-	if !folderAExists || !folderBExists {
-		return false
-	}
-
-	return true
+	return w.FolderLink.stillAlive() == 0
 
 }
 
-func (w *WalkItem) filesExists() (output bool) {
+func (w *WalkItem) itemsExist() (output bool) {
 	fileA, fileB := w.itemPaths()
 
 	//CHECK IF FOLDER LINK ROOT STILL EXISTS
@@ -208,5 +197,128 @@ func (w *WalkItem) copySync(inverse bool, recentTime time.Time) (success bool) {
 
 	fmt.Print("Copy!\n  ", source, "\n  (", recentTime, ")\n  --->\n  ", destination, "\n  (", destinationModTime, ")\n")
 
-	return w.filesExists()
+	return w.itemsExist()
+}
+
+func (w *WalkItem) pollingCheck() (pollingError bool) {
+	_, relativePath := w.properties()
+
+	status, recentTime := w.syncStatus()
+
+	errorCheck := errorCheck(status)
+
+	if errorCheck {
+		fmt.Println("Error hit!", status)
+		switch status {
+		case "ERROR::FOLDERLINK_NOT_ALIVE":
+			return true
+		default:
+			return false
+		}
+	}
+
+	fileDeleted := false
+
+	if status == "FILEB!=EXIST" {
+		if !w.stillAlive() {
+			return true
+		}
+		// fmt.Println("DESTINATION!=EXIST")
+		if !w.itemsExist() {
+			if slices.Contains(*w.FolderLink.folderHistory, relativePath) {
+				fmt.Println(relativePath, "File was deleted @ Folder B")
+				w.itemsRemover()
+				fileDeleted = true
+			} else {
+				fmt.Println(relativePath, "New file created @ Folder A")
+			}
+		}
+
+	}
+
+	if status == "FILEA!=EXIST" {
+		if !w.stillAlive() {
+			return true
+		}
+		// fmt.Println("SOURCE!=EXIST")
+		if !w.itemsExist() {
+			if slices.Contains(*w.FolderLink.folderHistory, relativePath) {
+				fmt.Println(relativePath, "deleted @ Folder A")
+				w.itemsRemover()
+
+				fileDeleted = true
+
+			} else {
+				fmt.Println(relativePath, "created @ Folder B")
+
+			}
+		}
+	}
+
+	if fileDeleted {
+		fmt.Println()
+		return false
+	}
+
+	//For when the files are not in sync, keep trying to copy until it reports synced
+	for status != "INSYNC" {
+		if !w.stillAlive() {
+			return true
+		}
+		// fmt.Println("NOT INSYNC", status)
+		status, recentTime = w.quickSync()
+	}
+
+	w.linkSumUpdate(recentTime)
+
+	return false
+}
+
+func (w *WalkItem) linkSumUpdate(recentTime time.Time) (success bool) {
+	folderLink, relativePath := w.properties()
+
+	if linkSums[folderLink.UUID] == nil {
+		fmt.Print("LinkSum at UUID ", folderLink.UUID, " does not exist... Creating one!\n")
+		linkSums[folderLink.UUID] = make(map[string]time.Time)
+	}
+
+	status, time := w.syncStatus()
+
+	if status != "INSYNC" {
+		return false
+	}
+
+	if time != recentTime {
+		return false
+	}
+
+	//This means that the linksum value @ uuid @ relative path does not exist
+	if linkSums[folderLink.UUID][relativePath].IsZero() {
+		// fmt.Println("linksum reporting zero")
+		linkSums[folderLink.UUID][relativePath] = time
+		fmt.Println("added to linksum", relativePath, "@", linkSums[folderLink.UUID][relativePath])
+		fmt.Println()
+
+	}
+
+	//This means that the linksum value @ uuid @ relative path is not up to date
+	if linkSums[folderLink.UUID][relativePath] != time {
+		// fmt.Println("linksum time not the same")
+		linkSums[folderLink.UUID][relativePath] = time
+		fmt.Println("updated linksum:", relativePath, "@", linkSums[folderLink.UUID][relativePath])
+		fmt.Println()
+	}
+
+	return true
+
+}
+
+func (w *WalkItem) itemsRemover() {
+	source, destination := w.itemPaths()
+
+	if w.stillAlive() {
+		os.Remove(source)
+		os.Remove(destination)
+	}
+
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -156,70 +155,4 @@ func FileNameSplitter(originalName string) (finalName string, finalExt string) {
 
 	return finalName, finalExt
 
-}
-
-/*
-The goal of this function is to walk through a directory, and return a list of files found in the directory.
-The function takes in account acceptions/exclusions listed in the related FolderLink.
-The list is of type WalkItem, which consists of a file's relative path, related FolderLink, whether it is 'inverse' or not (aka whether it is folder B or A in the Link)
-*/
-func WalkCheck(folderLink *FolderLink, inverse bool, checkedFiles *[]string, walkItems *[]WalkItem) (output error) {
-	var source string
-	// var destination string
-
-	if !inverse {
-		source = folderLink.FolderA
-	} else {
-		source = folderLink.FolderB
-	}
-
-	filepath.Walk(source, func(filePath string, file os.FileInfo, err error) error {
-
-		if err != nil {
-			output = err
-			return filepath.SkipAll
-		}
-
-		fileName := file.Name()
-		fileIsDir := file.IsDir()
-
-		if fileIsDir {
-			fileIsRoot := (filepath.Base(filePath) == filepath.Base(source))
-
-			if !fileIsRoot {
-				if (!folderFilterCheck(folderLink, fileName)) || (!folderLink.FolderRecursion) {
-					return filepath.SkipDir
-				}
-			}
-
-		} else {
-			fileNameShort, fileNameExt := FileNameSplitter(fileName)
-
-			if !fileFilterCheck(folderLink, inverse, fileNameShort, fileNameExt) {
-				return nil
-			}
-
-			extensionlessRelativePath := false
-			if folderLink.SyncType != "normal" {
-				extensionlessRelativePath = true
-			}
-
-			relativePath := relativePathFromRoot(source, filePath, extensionlessRelativePath)
-
-			if !slices.Contains(*checkedFiles, relativePath) {
-				*walkItems = append(*walkItems, WalkItem{FolderLink: folderLink, RelativePath: relativePath})
-				*checkedFiles = append(*checkedFiles, relativePath)
-				// fmt.Println("Added", relativePath)
-
-			} /* else {
-				fmt.Println("Already checked!", relativePath)
-			} */
-
-		}
-
-		return nil
-
-	})
-
-	return output
 }
