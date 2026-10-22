@@ -1,0 +1,121 @@
+{
+  "links":[
+    {
+      "uuid":1,
+      "name":"test sync",
+      "folderA":"./test/a",
+      "folderB":"./test/b",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "syncOnStartup":true
+
+    },
+    {
+      "uuid":2,
+      "name":"test sync2",
+      "folderA":"./test/b",
+      "folderB":"./test/c",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "syncOnStartup":true
+    },
+    {
+      "uuid":3,
+      "name":"test sync3",
+      "folderA":"./test/a",
+      "folderB":"./test/d",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "syncOnStartup":true
+
+    },
+    {
+      "uuid":4,
+      "name":"ERROR HANDLE",
+      "folderA":"./test/a",
+      "folderB":"./test2/a",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "syncOnStartup":true
+    },
+    {
+      "uuid":5,
+      "name":"convert type test",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"specific-exts",
+      "specificExts_FolderA": "SRM",
+      "specificExts_FolderB": "sav",
+      "specificExts_CaseSensitive": false,
+      "syncOnStartup":true
+    }, 
+    {
+      "uuid":6,
+      "name":"(Ext inexclude test) Include SRM (case sensitive), Exclude sav",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "extInclude": ["SRM"],
+      "extExclude": ["sav"],
+      "syncOnStartup":true
+
+    }, 
+    {
+      "uuid":7,
+      "name":"(File inexclude test) Include uppercase, Exclude lowercase",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "fileInclude": ["uppercase", "include_uppercase"],
+      "fileExclude": ["lowercase"],
+      "syncOnStartup":true
+    }, 
+    {
+      "uuid":8,
+      "name":"(Folder inexclude test) Include /include (and root), exclude /exclude",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "folderInclude": ["include"],
+      "folderExclude": ["exclude"],
+      "syncOnStartup":true
+    }, 
+    {
+      "uuid":9,
+      "name":"(Ext inexclude test) Exclude sav",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "extExclude": ["sav"],
+      "syncOnStartup":true
+
+    }, 
+    {
+      "uuid":10,
+      "name":"(File inexclude test) Exclude lowercase",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "fileExclude": ["lowercase", "include_lowercase", "other_lowercase", "exclude_lowercase"],
+      "syncOnStartup":true
+    }, 
+    {
+      "uuid":11,
+      "name":"(Folder inexclude test) exclude /exclude",
+      "folderA":"./test/gbaSRM",
+      "folderB":"./test/gbaSAV",
+      "folderRecursion":true,
+      "syncType":"normal",
+      "folderExclude": ["exclude"],
+      "syncOnStartup":true
+    }
+  
+  ]
+}
+
