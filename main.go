@@ -9,10 +9,18 @@ import (
 	"time"
 )
 
-// initalize global variables (folderLinks, linkGroups)
+// Initalize global variables (folderLinks, linkGroups)
+
+// Holds the deserialized data from the `.json`
 var folderLinks FolderLinks
 
 // var linkSums = make(map[string][]linkSumItem) //linkSums[folderLinkUUID][relativePath]=modTime
+
+// Holds a mapping of all the files in a `link` and their most recent `modification time`
+//
+// # This is a nested map, with the first key value representing the link's `UUID`, while the second key represents the relative path to the item
+//
+// @example linkSum[UUID][relative_path] = mod_time
 var linkSums = make(map[int]map[string]time.Time)
 
 // Global wait group cuz thats how im structuring things
