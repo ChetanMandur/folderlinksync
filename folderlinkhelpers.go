@@ -75,6 +75,8 @@ func relativePathFromRoot(root string, file string, extensionless bool) (relativ
 	relativePathSplit := fileSplit[len(rootSplit):]
 
 	// Chopping off the extension from the relative path if we are extensionless
+	// This is done, because the file will have a different extension depending on its location
+	// Example: `FolderA` has `.jpg`, while `FolderB` has `.jpeg` ==> Data is 1:1 but the extension is different
 	if extensionless {
 		// The file itself is just the final entry in `relativePathSplit`
 		// Grabs just the file name, ignores the ext
