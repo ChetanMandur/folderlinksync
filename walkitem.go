@@ -60,9 +60,9 @@ func (w *WalkItem) properties() (FolderLink *FolderLink, RelativePath string) {
 	return w.FolderLink, w.RelativePath
 }
 
-// Getter function to generate and retrieve the full paths of an item in both `Folder A` and `Folder B`
+// Getter function to generate and retrieve the full paths of an item in both `Folder A` and `Folder B`.
 //
-// # Unlike the `RelativePath`, these paths represent a complete path from `system root` to the item in each of the folders
+// (Unlike `RelativePath`, these paths represent a complete path from `system root` to the item in each of the folders)
 //
 // This function is creates a 'cache' within the `WalkItem` when first called (since these paths are stagnant).
 // So, on subsequent calls, this function simply returns the 'cached' field/property
@@ -92,7 +92,7 @@ func (w *WalkItem) itemPaths() (fileAPath string, fileBPath string) {
 
 }
 
-// Outputs the current status of the two files refered to within `WalkItem`
+// Outputs the current status of the two files refered to within `WalkItem`, along with the 'modification time' of the most up-to-date file
 //
 // Provides clear "ERROR" print-outs when file/folder retrival cause errors by the system
 //
@@ -167,7 +167,11 @@ func (w *WalkItem) syncStatus() (status string, recentTime time.Time) {
 
 }
 
-// Outputs result from `syncStatus()`, but also syncs files if they are found to be out-of-sync
+// Outputs result from `syncStatus()`, while also syncing files if they are found to be out-of-sync
+//
+// Out-of-sync means:
+//   - File exists only in one folder
+//   - File exists in both folders, but one copy of the file has a more recent `modification time`
 func (w *WalkItem) quickSync() (status string, recentTime time.Time) {
 	status, recentTime = w.syncStatus()
 
@@ -182,19 +186,24 @@ func (w *WalkItem) quickSync() (status string, recentTime time.Time) {
 
 }
 
-// Copies file to destination, and updates the file's mod time to the given mod time
+// Copies file to destination, and updates the file's modification time to the given modification time
+// Returns a `boolean` that signifies if the sync was successful
+//   - `true` = sync was successful
+//   - `false` = sync was not successful
 func (w *WalkItem) copySync(inverse bool, recentTime time.Time) (success bool) {
 
-	// True= actually copies False = doesnt copy; both print the paths it was gonna use (to -> from)
+	// True = actually copies False = doesnt copy; both print the paths it was gonna use (to -> from)
 	// goated debug line LMAO wtf was I on
 	yes := true
 
 	var source, destination string
 
-	//
+	// `inverse` determines which folder the file is sourced from
 	if !inverse {
+		// If `inverse` is `false`, the source is `Folder A`
 		source, destination = w.itemPaths()
 	} else {
+		// If `inverse` is `true`, the source is `Folder B`
 		destination, source = w.itemPaths()
 	}
 
@@ -202,38 +211,63 @@ func (w *WalkItem) copySync(inverse bool, recentTime time.Time) (success bool) {
 		return false
 	}
 
+	// Grabbing the file from both locations
 	sourceItem, sourceErr := os.Stat(source)
 	destinationItem, destinationErr := os.Stat(destination)
 
-	if !recentTime.Equal(w.FolderLink.roundedModTime(sourceItem)) {
-		return false
-	}
-
-	var destinationModTime time.Time
+	// Grabbing source file current `modification time`
+	// Want to make sure that the given `recentTime` matches the `modification time` of the source file
+	// If they are not equal, that means we would be copying + updating the file with incorrect `modification time`
+	// This would be an issue, since it would cause a sync to run twice:
+	// 	- First sync would apply the wrong modification times, meaning `source` and `destination` files are not considered in-sync
+	//  - Second sync would attempt to sync the two sources again
+	// 		(same direction or inversely, depending if the incorrectly given `recentTime` is greater-than or less-than the source file)
+	// If the given time is always given incorrectly, the two files might cyclicaly be out of sync indefinitely
 
 	if sourceErr != nil {
 		return false
 	}
 
+	if !recentTime.Equal(w.FolderLink.roundedModTime(sourceItem)) {
+		return false
+	}
+
+	// Grabbing the `modification time` from the destination location
+	// This only grabs if the destination file exists
+	// If it doesn't exist, don't worry, as this data is only for print-out fun times
+	var destinationModTime time.Time
+
 	if destinationErr == nil {
 		destinationModTime = w.FolderLink.roundedModTime(destinationItem)
 	}
 
+	// One more check before actually copying + modifying the file
+	// ie. a sanity check
 	if !w.stillAlive() {
 		return false
 	}
 
+	// Once agian, my goated debug statement
 	if yes {
+
+		// Copies the file from source to the destination
 		copy.Copy(source, destination)
 		// os.Chtimes(source, recentTime, recentTime)
+
+		// Runs a delay before updating the destination files `modification time`
+		// (also update's its `access time` but thats whatever)
 		w.FolderLink.fileModDelay()
 		os.Chtimes(destination, recentTime, recentTime)
 	} else {
 		fmt.Print("😈")
 	}
 
+	// Fun little print-out
 	fmt.Print("Copy!\n  ", source, "\n  (", recentTime, ")\n  --->\n  ", destination, "\n  (", destinationModTime, ")\n")
 
+	// Finally, returns whatever the `itemsExist()` check determines
+	// This works because the work done up to this point SHOULD have made it so the file exists at both locations
+	// But, for whatever reason, it doesn't exist at both location, this function safely and simply checks
 	return w.itemsExist()
 }
 
