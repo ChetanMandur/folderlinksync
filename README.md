@@ -1,27 +1,27 @@
 # Folder-Link-Sync (FLS) 
 
 ## A simple program to sync files between two directories
-[!CAUTION]
-*Currently in deep alpha-v1.0*
+> [!CAUTION]
+> **Currently in deep alpha-v1.0**
 
-[!WARNING]
-<ins>**While files are generally safe from corruption/deletion, many advance features may not work as intended**</ins>
+> [!WARNING]
+> <ins>**While files are generally safe from corruption/deletion, many advance features may not work as intended**</ins>
 
 ***This project was left unmaintained for quite some time, but is now picking up steam again***
 
 **The v1.0 release will aim to just cleanup and fix the current code and functionality. Any additional features and functionalities will be left for future releases**
 
 ## Building, setup, and running
-[!NOTE]
-I've only ran/developed this on Windows (since it's my main dev platform, feel free to judge)
+> [!NOTE]
+> I've only ran/developed this on Windows (since it's my main dev platform, feel free to judge)
 
 ### Production
 
 #### Building
 Nothing special, clone the repo and hit it with `go build .`
 
-[!NOTE]
-You need to move this new found compiled build to another folder (unless you specified the location in the command), if not, the program will interfere with the included testing files
+> [!NOTE]
+> You need to move this new found compiled build to another folder (unless you specified the location in the command), if not, the program will interfere with the included testing files
 
 #### Setup
 
