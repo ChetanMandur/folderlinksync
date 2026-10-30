@@ -62,7 +62,7 @@ func (w *WalkItem) properties() (FolderLink *FolderLink, RelativePath string) {
 
 // Getter function to generate and retrieve the full paths of an item in both `Folder A` and `Folder B`.
 //
-// (Unlike `RelativePath`, these paths represent a complete path from `system root` to the item in each of the folders)
+// Unlike `RelativePath`, these paths represent a complete path from `system root` to the item in each of the folders.
 //
 // This function is creates a 'cache' within the `WalkItem` when first called (since these paths are stagnant).
 // So, on subsequent calls, this function simply returns the 'cached' field/property
@@ -271,25 +271,45 @@ func (w *WalkItem) copySync(inverse bool, recentTime time.Time) (success bool) {
 	return w.itemsExist()
 }
 
+// Handles file syncing between folders in a `FolderLink`
+//
+// To be used within a continous `polling` loop, as it provides:
+//   - Proper print-outs
+//   - Handling of file deletion within a folder (while polling is active)
+//   - Record keeping of files and their `modification times` using `linkSum`
+//
+// Returns a `boolean` indicating whether or not there was an error
 func (w *WalkItem) pollingCheck() (pollingError bool) {
+	// Grabbing relevant data
 	_, relativePath := w.properties()
 
 	status, recentTime := w.syncStatus()
 
 	errorCheck := errorCheck(status)
 
+	// Error handler
 	if errorCheck {
 		fmt.Println("Error hit!", status)
 		switch status {
 		case "ERROR::FOLDERLINK_NOT_ALIVE":
 			return true
-		default:
+		// need to add case for when file doesn't exist in both folders
+		default: // Not all errors warrent leaving early
 			return false
 		}
 	}
 
+	// Indicates whether or the file was deleted within one of the folders
 	fileDeleted := false
 
+	// Cases for when the file exists only in one folder
+	// 	Order of operation is the same between both folders (only difference is that all references to folders are flipped):
+	// 		1) Double check if the file doesn't exist in the folder
+	// 		2) Check if file exists in the `FolderLink` history
+	// 			- If it exists, that means the file was deleted from the folder
+	// 			- If it does not exist, that means the file is new and was created in the other folder
+
+	// File was deleted in `Folder B` or created in `Folder A`
 	if status == "FILEB!=EXIST" {
 		if !w.stillAlive() {
 			return true
@@ -307,6 +327,7 @@ func (w *WalkItem) pollingCheck() (pollingError bool) {
 
 	}
 
+	// File was deleted in `Folder A` or created in `Folder B`
 	if status == "FILEA!=EXIST" {
 		if !w.stillAlive() {
 			return true
@@ -316,7 +337,6 @@ func (w *WalkItem) pollingCheck() (pollingError bool) {
 			if slices.Contains(*w.FolderLink.folderHistory, relativePath) {
 				fmt.Println(relativePath, "deleted @ Folder A")
 				w.itemsRemover()
-
 				fileDeleted = true
 
 			} else {
@@ -326,12 +346,14 @@ func (w *WalkItem) pollingCheck() (pollingError bool) {
 		}
 	}
 
+	// If the file was deleted, end early
+	// NOTE: Dead file is still in linksum, add code to remove it
 	if fileDeleted {
 		fmt.Println()
 		return false
 	}
 
-	//For when the files are not in sync, keep trying to copy until it reports synced
+	// For when the files are not in sync, keep trying to copy until it reports synced
 	for status != "INSYNC" {
 		if !w.stillAlive() {
 			return true
@@ -340,14 +362,20 @@ func (w *WalkItem) pollingCheck() (pollingError bool) {
 		status, recentTime = w.quickSync()
 	}
 
+	// Once files are properly synced, we can update the `linkSum`
 	w.linkSumUpdate(recentTime)
 
+	// Return `false`, since a check was done without any errors
 	return false
 }
 
+// Used to update the global `linkSum` and provides print-outs that explain which files were updated/added
+//
+// Returns a `boolean` if the update was successful (with `true` representing a successful update)
 func (w *WalkItem) linkSumUpdate(recentTime time.Time) (success bool) {
 	folderLink, relativePath := w.properties()
 
+	// Adds `FolderLink` to the global `linkSums`
 	if linkSums[folderLink.UUID] == nil {
 		fmt.Print("LinkSum at UUID ", folderLink.UUID, " does not exist... Creating one!\n")
 		linkSums[folderLink.UUID] = make(map[string]time.Time)
@@ -355,6 +383,7 @@ func (w *WalkItem) linkSumUpdate(recentTime time.Time) (success bool) {
 
 	status, time := w.syncStatus()
 
+	// If files are not in-sync, or the time given (in parameter) does not match the time of the file
 	if status != "INSYNC" {
 		return false
 	}
@@ -384,6 +413,9 @@ func (w *WalkItem) linkSumUpdate(recentTime time.Time) (success bool) {
 
 }
 
+// Function used to remove a `WalkItem` (ie. an item from a `FolderLink`) from the physical directory/folder
+//
+// This is to be used during polling, when a file is deliberately removed from one of the folders by the user/outside program
 func (w *WalkItem) itemsRemover() {
 	source, destination := w.itemPaths()
 

@@ -16,11 +16,17 @@ var folderLinks FolderLinks
 
 // var linkSums = make(map[string][]linkSumItem) //linkSums[folderLinkUUID][relativePath]=modTime
 
-// Holds a mapping of all the files in a `link` and their most recent `modification time`
+// Holds a mapping of all the files in a `FolderLink` and their most recent `modification time`
 //
-// # This is a nested map, with the first key value representing the link's `UUID`, while the second key represents the relative path to the item
+// This is used simply in print-outs, does not act as a 'history' for the files in a `FolderLink`
+//
+// This is a nested map, with the first key value representing the link's `UUID`, while the second key represents the relative path to the item.
 //
 // @example linkSum[UUID][relative_path] = mod_time
+//
+// ON CHOPPING BLOCK:
+//   - Unless a good use of this data can be thought of again, this will be removed soon
+//   - This is simply `FolderLink.folderHistory` but with `recentTime`/`modification time` stored as well (which is not needed)
 var linkSums = make(map[int]map[string]time.Time)
 
 // Global wait group cuz thats how im structuring things
