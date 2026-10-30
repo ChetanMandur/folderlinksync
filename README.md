@@ -43,9 +43,16 @@ The general structure is:
         "syncOnStartup": true,
         "continuousSync": true,
         "syncType": "normal" 
-        // Although there are other properties, as of writing, the following properties are the most generic and error-free
-        // To view other properties, or other possible values for the listed properties, please view the `FolderLink` type in `folderlink.go`
-    }
+        /* 
+            Although there are other properties available, (as of writing) the following 
+            properties listed above are the most generic and error-free
+        */
+
+        /* 
+            To view other properties, or other possible values for the listed properties,
+            please view the `FolderLink` type in `folderlink.go`
+        */
+    },
 ]
 
 ```
@@ -71,9 +78,33 @@ The code may seem convoluted *(mainly because it is, sorry for the spaghetti)*, 
 
 The name derives from the idea that you are 'linking' two folders together.
 
-*A FolderLink is a direct representation of an object in `"links"` within the `./userFiles/links.json` file*
+*A `FolderLink` acts as a direct representation of an object in `"links"` within the `./userFiles/links.json` file. Although it includes additional properties, these additional properties are for internal functionality, rather than overall structure*
 
-<ins>**WalkItem**</ins>: 
+<ins>**WalkItem**</ins>: A `WalkItem` is simply a representation of a file within a `FolderLink` that is marked to be synced. It provides a reference to the originating `FolderLink`, along with a `relativePath` that represents the files general location within the folder. 
+
+The name derives from the fact that a `WalkItem` is generated within the 'walk' of the given folders.
+
+### General Logic for Syncing a `FolderLink`:
+*On program launch, a `FolderLink` is generated from the data given in `userFiles/links.json`*
+
+1) Walk through the folders given in a `FolderLink`
+2) During the walk, generate a `WalkItem` for each applicable item
+3) After the walk, iterate through each of the `WalkItem`
+    - Check if the file exists in both folders
+        - If file does not exist in both folders
+            -  Check if the `FolderLink` has a recorded `.folderHistory`
+                - If it does
+                    - Check if file exists in history
+                        - If it does
+                            - File was deleted; mark `WalkItem` for deletion
+                        - If it does not:
+                            - File was created; copy file between folders
+                - If it does not
+                    - Copy file between folders
+        - If file does exist between both folders
+            - Compare `modification time` and copy the file with the most recent time to both folders
+4) Update the `.folderHistory` of the `FolderLink` with the relative paths of each of the `WalkItems`
+
 
 ## FAQ
 
@@ -100,7 +131,7 @@ The whole goal of **FLS** is automate this process of folder syncing. It allows 
 - Zero maintenance
     - Once installed and set up, you can forget it
 
-### Seems like a whole lot of talk, this codebase is disgusting and it's not that impressive
+### Seems like a whole lot of talk, this codebase is disgusting and it's not impressive
 
 Ok yeah, fair, good point.
 
