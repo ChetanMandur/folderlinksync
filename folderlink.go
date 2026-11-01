@@ -68,6 +68,9 @@ type FolderLink struct {
 	// @example - File `1` is copied from `Folder A` to `Folder B`, before updating the `modification` time of the copied file, wait `FileModDelay` amount of time
 	FileModDelay int `json:"fileModDelay"`
 
+	// The amount of seconds waitied within `pollingRoutine` before the next loop/iteration
+	PollDelay int `json:"pollDelay"`
+
 	//// Additional properties for 'specific-exts' type ////--------------------------------------------------
 
 	// Defines the extensions to target in `Folder A`
@@ -150,6 +153,20 @@ func (f *FolderLink) fileModDelay() {
 	if f.FileModDelay != 0 { // If the `link` specifies a `FileModDelay`
 		// Sleep for the amount of time
 		time.Sleep(time.Second * time.Duration(f.FileModDelay))
+	}
+}
+
+/*
+Void return function that `time.Sleep` for the `FolderLink`s `PollDelay` time.
+
+If the object does not have a `PollDelay` property, the function `time.Sleep` for `1 time.Second`
+*/
+func (f *FolderLink) pollDelay() {
+	// Hardcoded delay of 1 second
+	if f.PollDelay == 0 {
+		time.Sleep(1 * time.Second)
+	} else { //If a delay is given, use that delay
+		time.Sleep(time.Duration(f.PollDelay) * time.Second)
 	}
 }
 
@@ -426,6 +443,8 @@ func (f *FolderLink) pollingRoutine() {
 			f.folderHistory = nil
 
 		}
+		// Delay before the next iteration
+		f.pollDelay()
 	}
 
 }
