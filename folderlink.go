@@ -69,20 +69,13 @@ type FolderLink struct {
 	FileModDelay int `json:"fileModDelay"`
 
 	//// Additional properties for 'specific-exts' type ////--------------------------------------------------
-	// File format used for each folder, respectively
 
-	// (Used when `SyncType` is `specific-exts`)
-	//
 	// Defines the extensions to target in `Folder A`
 	SpecificExts_FolderA string `json:"specificExts_FolderA"`
 
-	// (Used when `SyncType` is `specific-exts`)
-	//
 	// Defines the extensions to target in `Folder B`
 	SpecificExts_FolderB string `json:"specificExts_FolderB"`
 
-	// (Used when `SyncType` is `specific-exts`)
-	//
 	// Defines whether or not the extension types are case-sensitive or not
 	SpecificExts_CaseSensitive bool `json:"specificExts_CaseSensitive"`
 
