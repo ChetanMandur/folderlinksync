@@ -15,41 +15,48 @@ type FolderLinks struct {
 
 // Representation of the data in a single `link` found within the `.json`
 type FolderLink struct {
-	//// Info not given by JSON
+	//// Info not given by JSON ////--------------------------------------------------
 
 	// An array that holds the files parsed through it's previous cycle in `pollingRoutine`
 	folderHistory *[]string
 
-	//// General info (Bare minimum)
+	//// General info (Bare minimum) ////--------------------------------------------------
 
 	// The name of the `link`
 	Name string `json:"name"`
+
 	// The first folder in the link
 	FolderA string `json:"folderA"`
+
 	// The second folder in the link
 	FolderB string `json:"folderB"`
+
 	// The UUID related to the `link`
 	UUID int `json:"uuid"`
+
 	// The direction at which the sync occurs
 	// 	- `bi` = 'bi-direction', meaning changes are checked on both folders `A` and `B`
 	// 	- `ab` = 'A-to-B', meaning changes are checked on folder `A` and reflected into folder `B`
 	//  - `ba` = 'B-to-A', meaning changes are checked on folder `B` and reflected into folder
 	SyncDirection string `json:"syncDirection"`
 
-	//// General syncing settings
+	//// General syncing settings ////--------------------------------------------------
 
 	// Whether or not to check folders within the link paths
 	FolderRecursion bool `json:"folderRecursion"`
+
 	// Whether or not the link should get synced on startup
 	SyncOnStartup bool `json:"syncOnStartup"`
+
 	// Whether or not to have link syned continuously after startup
 	ContinuousSync bool `json:"continuousSync"`
+
 	// The type of type of sync to occur
 	// 	- 'normal' = All files are synced
 	// 	- 'specific-exts' = Only files of a specific extension are synced (Both folders need an file extension specified, this will make a 1:1 copy no matter the formats; ie. no file conversion is done)
 	SyncType string `json:"syncType"`
 
-	//// Sync comparison settings
+	//// Sync comparison settings ////--------------------------------------------------
 
 	// The amount of seconds the `modification time` is rounded by
 	//
@@ -61,13 +68,14 @@ type FolderLink struct {
 	// @example - File `1` is copied from `Folder A` to `Folder B`, before updating the `modification` time of the copied file, wait `FileModDelay` amount of time
 	FileModDelay int `json:"fileModDelay"`
 
-	////Additional properties for 'specific-exts' type
-	//File format used for each folder, respectively
+	//// Additional properties for 'specific-exts' type ////--------------------------------------------------
+	// File format used for each folder, respectively
 
 	// (Used when `SyncType` is `specific-exts`)
 	//
 	// Defines the extensions to target in `Folder A`
 	SpecificExts_FolderA string `json:"specificExts_FolderA"`
+
 	// (Used when `SyncType` is `specific-exts`)
 	//
 	// Defines the extensions to target in `Folder B`
@@ -78,7 +86,7 @@ type FolderLink struct {
 	// Defines whether or not the extension types are case-sensitive or not
 	SpecificExts_CaseSensitive bool `json:"specificExts_CaseSensitive"`
 
-	//// General (Basic) Filtering rules
+	//// General (Basic) Filtering rules ////--------------------------------------------------
 	//In/Ex-clude Files
 
 	// Defines the list of file names (ie. files without the extension) to sync
