@@ -145,19 +145,25 @@ func (w *WalkItem) syncStatus() (status string, recentTime time.Time) {
 		fileBModTime := w.FolderLink.roundedModTime(fileB)
 
 		// No errors means we are in! We grab the mod time for the destination file and begin our work of finding the most up-to date version
+		// Need to also check for uni-directional syncing
+		// - If the file from the `destination` is more recent than the `source`
+		// - Need to update the `destination` file to be the exact same as the `source`
 
-		if fileAModTime.After(fileBModTime) {
+		if fileAModTime.After(fileBModTime) { // If file from `Folder A` is more recent than the file from `Folder B`
+			if w.FolderLink.SyncDirection != "ba" {
+				return "FILEA=RECENT", fileAModTime
+			} else {
+				return "LINK_OUT_OF_SYNC:FILEA=RECENT", fileBModTime
+			}
 
-			// fmt.Println("File is more recent in source (", source, sourceFileModTime, ")")
-			return "FILEA=RECENT", fileAModTime
-
-		} else if fileAModTime.Before(fileBModTime) {
-
-			// fmt.Println("File is more recent at destination (", destination, destinationFileModTime, ")")
-			return "FILEB=RECENT", fileBModTime
+		} else if fileAModTime.Before(fileBModTime) { // If file from `Folder B` is more recent than the file from `Folder A`
+			if w.FolderLink.SyncDirection != "ab" {
+				return "FILEB=RECENT", fileBModTime
+			} else {
+				return "LINK_OUT_OF_SYNC:FILEB=RECENT", fileAModTime
+			}
 
 		} else {
-			// fmt.Println("Files are in sync!")
 			return "INSYNC", fileAModTime
 		}
 
@@ -176,9 +182,9 @@ func (w *WalkItem) quickSync() (status string, recentTime time.Time) {
 	status, recentTime = w.syncStatus()
 
 	switch status {
-	case "FILEA=RECENT", "FILEB!=EXIST":
+	case "FILEA=RECENT", "FILEB!=EXIST", "LINK_OUT_OF_SYNC:FILEB=RECENT":
 		w.copySync(false, recentTime) // Syncs file copy from `Folder A` to `Folder B`
-	case "FILEB=RECENT", "FILEA!=EXIST":
+	case "FILEB=RECENT", "FILEA!=EXIST", "LINK_OUT_OF_SYNC:FILEA=RECENT":
 		w.copySync(true, recentTime) // Syncs file copy from `Folder B` to `Folder A`
 	}
 
