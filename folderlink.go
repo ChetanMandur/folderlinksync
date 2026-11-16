@@ -245,15 +245,10 @@ func (f *FolderLink) walkCheck(inverse bool, checkedFiles *[]string, walkItems *
 				return nil // If it fails the check, skip this file
 			}
 
-			// Checks if `SyncType` is `specific-exts`
-			// Since there are only two options for `SyncType`, we just check if it's not `normal`
-			extensionlessRelativePath := false
-			if f.SyncType != "normal" {
-				extensionlessRelativePath = true
-			}
-
 			// Find the relative path (from source/root) of the file
-			relativePath := relativePathFromRoot(source, filePath, extensionlessRelativePath)
+			// // Extension-less relative paths are only for links that are of `SyncType` `"specific-exts"`
+			// // // (Hence, the simple check for the `boolean` value that signifies whether or not the file is extension-less or not)
+			relativePath := relativePathFromRoot(source, filePath, f.SyncType == "specific-exts")
 
 			// If this same relative path does not exist within `checkedFiles`, add it to both `checkedFiles` and `walkItems`
 			// This same path would only exist if `walkCheck` is on a second run on the sibling folder
