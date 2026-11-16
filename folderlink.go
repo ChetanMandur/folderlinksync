@@ -225,14 +225,7 @@ func (f *FolderLink) walkCheck(inverse bool, checkedFiles *[]string, walkItems *
 		if fileIsDir {
 
 			// Check if the file is root
-			// NOTE: THIS IS BROKEN, DOES NOT ACCOUNT FOR WHEN A CHILD FOLDER HAS THE SAME NAME AS ROOT
-			// The fix is checking the full file path, rather than the name of the folder
-			fileIsRoot := (filepath.Base(filePath) == filepath.Base(source))
-
-			// fmt.Println("\nFile Path:\nBase: ", filepath.Base(filePath), "\nFull: ", filePath)
-			// fmt.Println("\nSource/Root:\nBase: ", filepath.Base(source), "\nFull: ", source)
-			// fmt.Println("\nIsRoot?", fileIsRoot)
-			// fmt.Println("====")
+			fileIsRoot := (filePath == source)
 
 			// If the folder is not root
 			if !fileIsRoot {
